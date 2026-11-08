@@ -5,6 +5,9 @@ import path from "node:path";
 import { parseOrderText } from "./parseOrder.js";
 import { normalizeDraft } from "./draft.js";
 import { paypalConfig, hasCredentials, createOrder, captureOrder } from "./paypal.js";
+import { loadEnvFile } from "./env.js";
+
+loadEnvFile();
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "..", "public");

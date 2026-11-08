@@ -17,7 +17,10 @@ Requirements: Node.js 18+ (no dependencies to install).
 
 ```bash
 # 1. Create a Sandbox app at https://developer.paypal.com/dashboard/
-#    and copy its Client ID and Secret.
+#    and copy its Client ID and Secret into a local .env file
+#    (see .env.example; .env is git-ignored and is loaded automatically
+#    at startup — shell exports still take precedence).
+#    Or export them instead:
 export PAYPAL_CLIENT_ID=your-sandbox-client-id
 export PAYPAL_CLIENT_SECRET=your-sandbox-secret
 
@@ -43,9 +46,10 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, and the Devpost submiss
 npm test
 ```
 
-The test suite (10 tests) covers the natural-language parser, the
+The test suite (13 tests) covers the natural-language parser, the
 server-side draft repricing (a price-tampered draft is corrected to the
-catalog total before payment), and a full create → approve → capture run
+catalog total before payment), the `.env` loader, and a full create →
+approve → capture run
 against a local stand-in for the PayPal API (same app code,
 `PAYPAL_API_BASE` pointed at the stand-in), including the refusal to
 capture before approval.
@@ -56,6 +60,7 @@ capture before approval.
 - `src/draft.js` — server-side repricing of an edited draft from the catalog
 - `src/catalog.js` — demo catalog with fixed USD prices
 - `src/paypal.js` — PayPal Orders v2 client (token, create, capture)
+- `src/env.js` — dependency-free `.env` loader (shell exports win)
 - `src/server.js` — HTTP server and API endpoints
 - `public/` — the single-page demo UI
 - `test/` — parser tests and the end-to-end flow test
