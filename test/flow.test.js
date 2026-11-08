@@ -42,11 +42,29 @@ function startMockPayPal() {
       orders.get(id).approved = true;
       return send(200, { approved: true, id });
     }
+    const get = url.pathname.match(/^\/v2\/checkout\/orders\/([^/]+)$/);
+    if (req.method === "GET" && get) {
+      const order = orders.get(get[1]);
+      if (!order) return send(404, { error: "not_found" });
+      if (order.captured) {
+        const amount = order.body.purchase_units[0].amount;
+        return send(200, {
+          id: get[1],
+          status: "COMPLETED",
+          purchase_units: [
+            { payments: { captures: [{ id: "MOCK-CAPTURE-9KD55210", status: "COMPLETED", amount }] } },
+          ],
+        });
+      }
+      return send(200, { id: get[1], status: order.approved ? "APPROVED" : "CREATED", purchase_units: [] });
+    }
     const cap = url.pathname.match(/^\/v2\/checkout\/orders\/([^/]+)\/capture$/);
     if (req.method === "POST" && cap) {
       const order = orders.get(cap[1]);
       if (!order) return send(404, { error: "not_found" });
       if (!order.approved) return send(422, { error: "ORDER_NOT_APPROVED" });
+      if (order.captured) return send(422, { error: "ORDER_ALREADY_CAPTURED" });
+      order.captured = true;
       const amount = order.body.purchase_units[0].amount;
       return send(200, {
         id: cap[1],
@@ -150,6 +168,58 @@ test("full flow: a price-tampered draft is repriced by the server before capture
   assert.equal(captured.status, 200);
   assert.equal(captured.body.status, "COMPLETED");
   assert.equal(captured.body.amount.value, "45.50");
+});
+
+test("order status lookup tracks CREATED -> APPROVED -> COMPLETED without re-capturing", async (t) => {
+  const mock = await startMockPayPal();
+  const mockBase = `http://127.0.0.1:${mock.address().port}`;
+  const app = createServer({
+    clientId: "mock-client",
+    clientSecret: "mock-secret",
+    base: mockBase,
+    envName: "custom",
+  });
+  await new Promise((r) => app.listen(0, "127.0.0.1", r));
+  const appBase = `http://127.0.0.1:${app.address().port}`;
+  t.after(() => { app.close(); mock.close(); });
+
+  const post = async (path, body) => {
+    const res = await fetch(`${appBase}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: await res.json() };
+  };
+  const getStatus = async (id) => {
+    const res = await fetch(`${appBase}/api/orders/${id}`);
+    return { status: res.status, body: await res.json() };
+  };
+
+  const created = await post("/api/orders", { text: "a mug" });
+  assert.equal(created.status, 201);
+
+  // Before approval: CREATED, nothing captured yet.
+  let lookup = await getStatus(created.body.id);
+  assert.equal(lookup.status, 200);
+  assert.equal(lookup.body.status, "CREATED");
+  assert.equal(lookup.body.captureId, null);
+
+  await fetch(created.body.approveUrl);
+  lookup = await getStatus(created.body.id);
+  assert.equal(lookup.body.status, "APPROVED");
+  assert.equal(lookup.body.captureId, null);
+
+  const captured = await post("/api/orders/capture", { orderId: created.body.id });
+  assert.equal(captured.status, 200);
+
+  // After capture (the refresh-on-return case): the lookup alone reports
+  // the completed payment, so the UI never needs a second capture call —
+  // the mock rejects one with ORDER_ALREADY_CAPTURED, like the real API.
+  lookup = await getStatus(created.body.id);
+  assert.equal(lookup.body.status, "COMPLETED");
+  assert.equal(lookup.body.captureId, "MOCK-CAPTURE-9KD55210");
+  assert.equal(lookup.body.amount.value, "12.00");
 });
 
 test("orders endpoint refuses to run without credentials", async (t) => {

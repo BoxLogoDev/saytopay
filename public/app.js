@@ -85,8 +85,23 @@ document.querySelector("#payBtn").addEventListener("click", async () => {
       box.textContent = "No order id found on return.";
       return;
     }
-    box.textContent = `Approved order ${orderId}. Capturing…`;
+    box.textContent = `Returned with order ${orderId}. Checking its status…`;
     try {
+      // Check first: a refresh after a completed payment must show the
+      // existing result, not capture the same order a second time.
+      const current = await api(`/api/orders/${encodeURIComponent(orderId)}`);
+      if (current.status === "COMPLETED") {
+        box.textContent = JSON.stringify(
+          { orderId: current.id, status: current.status, captureId: current.captureId, amount: current.amount },
+          null, 2
+        );
+        return;
+      }
+      if (current.status !== "APPROVED") {
+        box.textContent = `Order ${orderId} is ${current.status} — it has not been approved yet, so nothing was captured.`;
+        return;
+      }
+      box.textContent = `Approved order ${orderId}. Capturing…`;
       const captured = await api("/api/orders/capture", { orderId });
       box.textContent = JSON.stringify(
         { orderId: captured.id, status: captured.status, captureId: captured.captureId, amount: captured.amount },

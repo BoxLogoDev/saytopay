@@ -58,12 +58,14 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
-## Filming status (2026-11-08, 5th cycle)
+## Filming status (2026-11-08, 6th cycle)
 
 - Scenes 1–3 are filmable today: health (`credentialsConfigured: true`),
   parse ($45.50), and UI serving were re-verified live in this cycle, and
-  `npm test` passes 13/13. Scene 3 now also shows the editable draft
-  (quantity inputs, Remove buttons, server-side repricing).
+  `npm test` passes 14/14. Scene 3 now also shows the editable draft
+  (quantity inputs, Remove buttons, server-side repricing). The return
+  page now checks the order status before capturing, so a refresh after
+  the result screen is safe to show on camera.
 - Scene 4 is **partly verified but not yet filmable end to end**: real
   sandbox order creation succeeded in the 4th cycle (orders created in
   CREATED state with approval URLs, and an unapproved capture was refused

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parseOrderText } from "./parseOrder.js";
 import { normalizeDraft } from "./draft.js";
-import { paypalConfig, hasCredentials, createOrder, captureOrder } from "./paypal.js";
+import { paypalConfig, hasCredentials, createOrder, captureOrder, getOrder } from "./paypal.js";
 import { loadEnvFile } from "./env.js";
 
 loadEnvFile();
@@ -74,6 +74,18 @@ export function createServer(paypalCfg = config) {
           cancelUrl: `${base}/cancel`,
         });
         return json(res, 201, created);
+      }
+
+      // Read-only status lookup: the return page checks this before
+      // capturing, so a refresh after a completed payment does not try
+      // to capture the same order again.
+      const statusMatch = url.pathname.match(/^\/api\/orders\/([^/]+)$/);
+      if (req.method === "GET" && statusMatch) {
+        if (!hasCredentials(paypalCfg)) {
+          return json(res, 503, { error: "paypal_credentials_missing" });
+        }
+        const order = await getOrder(paypalCfg, decodeURIComponent(statusMatch[1]));
+        return json(res, 200, order);
       }
 
       if (req.method === "POST" && url.pathname === "/api/orders/capture") {

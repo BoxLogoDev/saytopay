@@ -29,7 +29,9 @@ quantities, and a total, lets the buyer review the draft, and then completes
 a real PayPal sandbox payment through the Orders flow: create order →
 buyer approval → capture. The draft is editable (quantities, removals), and
 the server reprices it from the catalog before payment, so client-supplied
-prices are never trusted. The result screen shows the order ID, capture ID,
+prices are never trusted. On return from approval the app looks the order
+up before capturing, so refreshing the result page never captures twice.
+The result screen shows the order ID, capture ID,
 and amount as proof, and the same transaction is visible in the PayPal
 sandbox dashboard.
 
@@ -48,9 +50,10 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 13 passing) cover the parser, the server-side draft
+- Tests (`npm test`, 14 passing) cover the parser, the server-side draft
   repricing (a draft claiming $0.01 per item is corrected to the $45.50
-  catalog total before capture), the `.env` loader, and a full create →
+  catalog total before capture), the `.env` loader, the order status
+  lookup across CREATED → APPROVED → COMPLETED, and a full create →
   approve → capture run against a local stand-in for the PayPal API,
   including refusing to capture before approval.
 

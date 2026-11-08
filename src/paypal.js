@@ -87,6 +87,30 @@ export async function createOrder(config, draft, { returnUrl, cancelUrl } = {}) 
   return { id: order.id, status: order.status, approveUrl, raw: order };
 }
 
+/**
+ * Look up an order without changing it. Returns the same summary shape as
+ * captureOrder ({ id, status, captureId, amount }) — captureId/amount are
+ * null until the order is captured. The return page uses this to tell an
+ * already-completed payment (e.g. after a refresh) from one that still
+ * needs capturing, instead of blindly capturing twice.
+ */
+export async function getOrder(config, orderId) {
+  const token = await getAccessToken(config);
+  const result = await paypalFetch(config, `/v2/checkout/orders/${orderId}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const capture =
+    result?.purchase_units?.[0]?.payments?.captures?.[0] || null;
+  return {
+    id: result.id,
+    status: result.status,
+    captureId: capture?.id || null,
+    amount: capture?.amount || null,
+    raw: result,
+  };
+}
+
 /** Capture an approved order. Returns { id, status, captureId, amount }. */
 export async function captureOrder(config, orderId) {
   const token = await getAccessToken(config);

@@ -8,7 +8,7 @@ Built for the PayPal AI Hackathon 2026. Category: AI Shopping Assistant / Agenti
 
 1. **Say it** — one sentence, e.g. `2 coffee beans and a notebook`.
 2. **Review and edit the draft** — the app's single AI-style step converts the sentence into items, quantities and a total (`src/parseOrder.js`). It is a deterministic offline parser over a small demo catalog, behind a function boundary that an LLM call can replace without touching the payment flow. You can then adjust quantities or remove items in the draft table; the server reprices the edited draft from the catalog (`src/draft.js`) — client-supplied prices are never trusted.
-3. **Pay with PayPal (sandbox)** — the server rebuilds the draft from the catalog (SKU + quantity only), creates a PayPal Orders v2 order, redirects the buyer to the PayPal approval page, and captures the order on return (`src/paypal.js`, `src/server.js`).
+3. **Pay with PayPal (sandbox)** — the server rebuilds the draft from the catalog (SKU + quantity only), creates a PayPal Orders v2 order, redirects the buyer to the PayPal approval page, and captures the order on return (`src/paypal.js`, `src/server.js`). On return the app first looks the order up (`GET /api/orders/:id`): an already-completed payment is shown as-is instead of being captured a second time, and an order that was never approved is reported without capturing anything.
 4. **Proof** — the result screen shows the order ID, capture ID and amount; the same transaction appears in the PayPal sandbox dashboard.
 
 ## Run it
@@ -46,9 +46,10 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, and the Devpost submiss
 npm test
 ```
 
-The test suite (13 tests) covers the natural-language parser, the
+The test suite (14 tests) covers the natural-language parser, the
 server-side draft repricing (a price-tampered draft is corrected to the
-catalog total before payment), the `.env` loader, and a full create →
+catalog total before payment), the `.env` loader, the order status
+lookup across CREATED → APPROVED → COMPLETED, and a full create →
 approve → capture run
 against a local stand-in for the PayPal API (same app code,
 `PAYPAL_API_BASE` pointed at the stand-in), including the refusal to
