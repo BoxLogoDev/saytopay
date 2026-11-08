@@ -15,6 +15,13 @@
     <label for="prompt">What do you want to buy?</label>
     <textarea id="prompt" rows="2" placeholder="e.g. 2 coffee beans and a notebook for the office">2 coffee beans and a notebook</textarea>
     <button id="parseBtn">Build order draft</button>
+    <p id="parseFeedback" class="note" hidden></p>
+  </section>
+
+  <section id="step-catalog">
+    <h2>Demo catalog</h2>
+    <p class="note">These are the items the demo understands. Click one to start an order draft for it, or name several in one sentence above.</p>
+    <ul id="catalogList"></ul>
   </section>
 
   <section id="step-draft" hidden>

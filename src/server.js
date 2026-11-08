@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parseOrderText } from "./parseOrder.js";
+import { publicCatalog } from "./catalog.js";
 import { normalizeDraft } from "./draft.js";
 import { paypalConfig, hasCredentials, createOrder, captureOrder, getOrder } from "./paypal.js";
 import { loadEnvFile } from "./env.js";
@@ -39,6 +40,12 @@ export function createServer(paypalCfg = config) {
           paypalEnv: paypalCfg.envName,
           credentialsConfigured: hasCredentials(paypalCfg),
         });
+      }
+
+      // What a buyer can say: the demo catalog, rendered by the UI so the
+      // buyable items and their prices are visible before ordering.
+      if (req.method === "GET" && url.pathname === "/api/catalog") {
+        return json(res, 200, { items: publicCatalog(), currency: "USD" });
       }
 
       if (req.method === "POST" && url.pathname === "/api/parse") {

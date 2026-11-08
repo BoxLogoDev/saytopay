@@ -13,6 +13,16 @@ async function api(path, body) {
 
 function renderDraft(d) {
   draft = d;
+  // An unmatched sentence must say so visibly: the draft section stays
+  // hidden when there are no items, so the parser's note goes to a
+  // feedback line next to the input instead of disappearing with it.
+  const feedback = document.querySelector("#parseFeedback");
+  if (d.items.length === 0) {
+    feedback.textContent = d.note || "No catalog item matched. Try one of the demo catalog items below.";
+    feedback.hidden = false;
+  } else {
+    feedback.hidden = true;
+  }
   const tbody = document.querySelector("#draftTable tbody");
   tbody.innerHTML = d.items
     .map(
@@ -50,14 +60,36 @@ async function editDraft(sku, quantity) {
   }
 }
 
-document.querySelector("#parseBtn").addEventListener("click", async () => {
+async function buildDraft() {
   const text = document.querySelector("#prompt").value;
   try {
     renderDraft(await api("/api/parse", { text }));
   } catch (e) {
     alert(e.message);
   }
-});
+}
+
+document.querySelector("#parseBtn").addEventListener("click", buildDraft);
+
+// Render the buyable catalog: every chip starts a draft for that item, so
+// a first-time visitor can see what the demo sells without guessing words.
+async function loadCatalog() {
+  try {
+    const { items } = await api("/api/catalog");
+    const list = document.querySelector("#catalogList");
+    list.innerHTML = items
+      .map((i) => `<li><button class="chip" type="button" data-name="${i.name}">${i.name} — $${i.price.toFixed(2)}</button></li>`)
+      .join("");
+    list.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.querySelector("#prompt").value = `1 ${chip.dataset.name.toLowerCase()}`;
+        buildDraft();
+      });
+    });
+  } catch {}
+}
+
+loadCatalog();
 
 document.querySelector("#payBtn").addEventListener("click", async () => {
   const status = document.querySelector("#payStatus");

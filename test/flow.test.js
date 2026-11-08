@@ -222,6 +222,23 @@ test("order status lookup tracks CREATED -> APPROVED -> COMPLETED without re-cap
   assert.equal(lookup.body.amount.value, "12.00");
 });
 
+test("catalog endpoint lists the buyable items without parser internals", async (t) => {
+  const app = createServer({ clientId: "", clientSecret: "", base: "http://127.0.0.1:1", envName: "sandbox" });
+  await new Promise((r) => app.listen(0, "127.0.0.1", r));
+  t.after(() => app.close());
+  const res = await fetch(`http://127.0.0.1:${app.address().port}/api/catalog`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.items.length, 12);
+  const coffee = body.items.find((i) => i.sku === "coffee-beans");
+  assert.equal(coffee.name, "Coffee beans 1kg");
+  assert.equal(coffee.price, 18);
+  assert.equal(coffee.currency, "USD");
+  for (const item of body.items) {
+    assert.ok(!("keywords" in item), "parser keywords must not leak into the public catalog");
+  }
+});
+
 test("orders endpoint refuses to run without credentials", async (t) => {
   const app = createServer({ clientId: "", clientSecret: "", base: "http://127.0.0.1:1", envName: "sandbox" });
   await new Promise((r) => app.listen(0, "127.0.0.1", r));

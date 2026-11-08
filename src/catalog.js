@@ -1,5 +1,16 @@
 // Demo catalog used by the natural-language order parser.
 // Prices are fixed demo prices in USD for the PayPal sandbox only.
+
+/**
+ * The public view of the catalog: what a buyer can actually say in a
+ * sentence, with prices. Parser internals (keywords) are deliberately not
+ * exposed — the UI renders this list so the demo's buyable items are
+ * discoverable instead of guessable only from the placeholder text.
+ */
+export function publicCatalog() {
+  return CATALOG.map(({ sku, name, price }) => ({ sku, name, price, currency: "USD" }));
+}
+
 export const CATALOG = [
   { sku: "coffee-beans", name: "Coffee beans 1kg", price: 18.0, keywords: ["coffee beans", "coffee bean", "coffee"] },
   { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds"] },

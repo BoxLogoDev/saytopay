@@ -13,5 +13,8 @@ input.qty { width: 64px; padding: 6px; border: 1px solid #c6d0da; border-radius:
 button.removeBtn { margin-top: 0; background: #eef2f6; color: #44566b; padding: 6px 10px; }
 button.removeBtn:hover { background: #dde5ec; }
 button:disabled { opacity: .5; cursor: not-allowed; }
+#catalogList { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+button.chip { margin-top: 0; background: #eef2f6; color: #14202e; padding: 6px 10px; font-size: .9em; }
+button.chip:hover { background: #dde5ec; }
 pre { background: #0f1c2b; color: #cdeffd; padding: 14px; border-radius: 8px; overflow-x: auto; }
 section { margin-top: 22px; }
