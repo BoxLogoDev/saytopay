@@ -48,11 +48,11 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 10 passing) cover the parser, the server-side draft
+- Tests (`npm test`, 13 passing) cover the parser, the server-side draft
   repricing (a draft claiming $0.01 per item is corrected to the $45.50
-  catalog total before capture), and a full create → approve → capture run
-  against a local stand-in for the PayPal API, including refusing to
-  capture before approval.
+  catalog total before capture), the `.env` loader, and a full create →
+  approve → capture run against a local stand-in for the PayPal API,
+  including refusing to capture before approval.
 
 ## Built during the hackathon
 All of SayToPay — parser, PayPal client, server, UI, and tests — was built
@@ -82,7 +82,7 @@ boundary, widen the catalog, and add a confirmation summary spoken back to
 the buyer before approval.
 
 ## Try it out / Links
-- Public repository: [REPO_URL]
+- Public repository: https://github.com/BoxLogoDev/saytopay
 - Demo video (under 3 minutes): [VIDEO_URL]
 - Run locally: Node.js 18+, set `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
   from your own PayPal sandbox app, then `npm start`. Sandbox only — no

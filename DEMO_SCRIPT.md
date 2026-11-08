@@ -26,11 +26,13 @@ no separate product search and no manual cart."
 
 ### Scene 3 — Review the draft (0:50–1:15) · Screen: order draft table
 On-screen action: pause on the draft table — Coffee beans 1kg ×2 ($36.00),
-Paper notebook ×1 ($9.50), total **$45.50**.
+Paper notebook ×1 ($9.50), total **$45.50**. Point to the editable quantity
+inputs and Remove buttons without changing the final total.
 Narration: "The draft is not a black box. Every item, quantity, and price is
 shown before any money moves, and the total is forty-five dollars fifty
-cents. If the sentence was wrong, you fix the sentence — not ten form
-fields."
+cents. You can adjust a quantity or remove an item right in the table, and
+the server recalculates every price from the catalog — the browser's
+numbers are never trusted."
 
 ### Scene 4 — Pay with PayPal sandbox (1:15–1:55) · Screen: PayPal approval → return
 On-screen action: click **Pay with PayPal (sandbox)**, complete the sandbox
@@ -56,11 +58,17 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
-## Filming status (2026-11-08, 2nd cycle)
+## Filming status (2026-11-08, 5th cycle)
 
-- Scenes 1–3 are filmable today: health, parse ($45.50), and UI serving were
-  re-verified live in this cycle, and `npm test` passes 6/6.
-- Scenes 4–5 are **not yet filmable**: the local server reports
-  `credentialsConfigured: false` — no PayPal sandbox Client ID/Secret exists
-  in this environment yet. Film them only after the QA cycle completes a
-  real sandbox create → approve → capture run and records its IDs.
+- Scenes 1–3 are filmable today: health (`credentialsConfigured: true`),
+  parse ($45.50), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 13/13. Scene 3 now also shows the editable draft
+  (quantity inputs, Remove buttons, server-side repricing).
+- Scene 4 is **partly verified but not yet filmable end to end**: real
+  sandbox order creation succeeded in the 4th cycle (orders created in
+  CREATED state with approval URLs, and an unapproved capture was refused
+  by the real sandbox API with 422 `ORDER_NOT_APPROVED`). Buyer approval
+  itself has not been completed yet, so there is no verified capture.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+- Public repository: https://github.com/BoxLogoDev/saytopay
