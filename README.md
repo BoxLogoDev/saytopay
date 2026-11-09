@@ -46,13 +46,20 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (43 tests) covers the natural-language parser
+The test suite (55 tests) covers the natural-language parser
 (including group words — "a pair of headphones" and "a couple of
 mugs" draft two, "two pairs" drafts four, and "a couple of dozen
-mugs" drafts twenty-four — number words above twelve — "twenty notebooks" is twenty
-notebooks and "twenty-one mugs" is twenty-one, not one — summing repeated mentions of the same item in one sentence —
+mugs" drafts twenty-four — container words: "3 boxes of candles"
+drafts three, "2 sets of headphones" drafts two, and a negated
+container ("no boxes of candles") drafts none — number words above twelve — "twenty notebooks" is twenty
+notebooks and "twenty-one mugs" is twenty-one, not one — scale words:
+"a hundred notebooks" and "a thousand candles" draft the scaled
+quantity (clamped to ninety-nine), not one, and "a hundred and five
+mugs" drafts the scaled quantity, not just the five — summing repeated mentions of the same item in one sentence —
 "a mug and three mugs" is four mugs — dozen quantities: "a dozen
-mugs" is twelve mugs, "half a dozen" is six — quantities stated
+mugs" is twelve mugs, "half a dozen" is six, and the hyphenated
+forms count the same — "half-dozen" is six and "two-dozen" is
+twenty-four, while "no half a dozen mugs" drafts no mugs — quantities stated
 before a catalog adjective: "2 wireless headphones" is two headphones,
 "a dozen ceramic mugs" is twelve mugs — trailing counts written after
 the item: "mugs x3" is three mugs and "coffee beans x2" is two, applied
@@ -63,7 +70,9 @@ negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
 leaking onto the next item — and an "of the" connector between the
 quantity and the item: "two of the mugs" is two mugs and "a dozen of
-the mugs" is twelve), the
+the mugs" is twelve — and "more" between a quantity and the item:
+"two more mugs" is two mugs, "a dozen more mugs" is twelve, and
+"no more mugs" drafts no mugs), the
 public catalog listing (names and prices only — parser keywords never
 leak), the
 server-side draft repricing (a price-tampered draft is corrected to the

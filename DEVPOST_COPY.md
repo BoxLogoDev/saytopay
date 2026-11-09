@@ -29,11 +29,16 @@ quantities, and a total, lets the buyer review the draft, and then completes
 a real PayPal sandbox payment through the Orders flow: create order →
 buyer approval → capture. Group words count too — "a pair of
 headphones" and "a couple of mugs" draft two, and "two pairs" drafts
-four. Quantities said as number words work past
+four. Container words count too — "3 boxes of candles" drafts three
+and "2 sets of headphones" drafts two, and a container the buyer rules
+out ("no boxes of candles") drafts none. Quantities said as number words work past
 twelve too — "twenty notebooks" drafts twenty and "twenty-one mugs"
-drafts twenty-one, not one. Mentioning the same item twice in the sentence
+drafts twenty-one, not one. Scale words count too — "a hundred
+notebooks" and "a thousand candles" draft the scaled quantity
+(clamped to ninety-nine), not one. Mentioning the same item twice in the sentence
 sums its quantities instead of dropping the second mention, and quantities
-can be said the way people say them — digits, number words up to ninety-nine,
+can be said the way people say them — digits, number words up to ninety-nine
+and scale words (hundred, thousand),
 or dozens ("a dozen mugs" drafts twelve), and a quantity still counts
 when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or written after the item in
@@ -70,19 +75,24 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 43 passing) cover the parser (including group
+- Tests (`npm test`, 55 passing) cover the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
-  four — number
+  four — container words — "3 boxes of candles" drafts three and a
+  negated container drafts none — number
   words above twelve and compound tens — "twenty notebooks" drafts
-  twenty, "twenty-one mugs" drafts twenty-one — summing
+  twenty, "twenty-one mugs" drafts twenty-one — scale words —
+  "a hundred notebooks" drafts the scaled quantity, clamped to
+  ninety-nine — summing
   repeated mentions of the same item in one sentence, dozen
-  quantities — "a dozen mugs" drafts twelve — quantities stated
+  quantities — "a dozen mugs" drafts twelve, "half-dozen" drafts
+  six and "two-dozen" drafts twenty-four — quantities stated
   before a catalog adjective, trailing counts after the item
   ("mugs x3"), word-boundary matching so
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
-  drafts two), malformed JSON bodies answered as `400 invalid_json`
+  drafts two, and quantities before "more" so "two more mugs"
+  drafts two while "no more mugs" drafts none), malformed JSON bodies answered as `400 invalid_json`
   instead of a misleading upstream error, the public catalog
   listing, the server-side draft
   repricing (a draft claiming $0.01 per item is corrected to the $45.50

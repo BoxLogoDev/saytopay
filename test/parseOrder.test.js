@@ -284,9 +284,155 @@ test("negation still covers pair phrasing and the standard example is unchanged"
   assert.equal(standard.total, 45.5);
 });
 
+test("a counted container drafts that many of the item it holds", () => {
+  const boxes = parseOrderText("3 boxes of candles");
+  assert.equal(boxes.items.length, 1);
+  assert.equal(boxes.items[0].sku, "candle");
+  assert.equal(boxes.items[0].quantity, 3);
+  assert.equal(boxes.total, 40.5);
+  const sets = parseOrderText("2 sets of headphones");
+  assert.equal(sets.items[0].quantity, 2);
+  assert.equal(sets.total, 118);
+  const packs = parseOrderText("two packs of coffee beans and a notebook");
+  assert.equal(packs.items.find((i) => i.sku === "coffee-beans").quantity, 2);
+  assert.equal(packs.items.find((i) => i.sku === "notebook").quantity, 1);
+  assert.equal(packs.total, 45.5);
+  const large = parseOrderText("2 large boxes of candles");
+  assert.equal(large.items[0].quantity, 2);
+  assert.equal(large.total, 27);
+});
+
+test("a container alone does not invent a quantity", () => {
+  const d = parseOrderText("a box of candles");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 1);
+  assert.equal(d.total, 13.5);
+  const bare = parseOrderText("boxes of candles please");
+  assert.equal(bare.items[0].quantity, 1);
+});
+
+test("negation still covers container phrasing", () => {
+  const d = parseOrderText("no boxes of candles, just a mug");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.total, 12);
+  const pack = parseOrderText("no pack of mugs, just a notebook");
+  assert.equal(pack.items.length, 1);
+  assert.equal(pack.items[0].sku, "notebook");
+  assert.equal(pack.total, 9.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("scale words draft the scaled quantity, clamped to 99", () => {
+  const hundred = parseOrderText("a hundred notebooks");
+  assert.equal(hundred.items.length, 1);
+  assert.equal(hundred.items[0].sku, "notebook");
+  assert.equal(hundred.items[0].quantity, 99);
+  assert.equal(hundred.total, 99 * 9.5);
+  const oneHundred = parseOrderText("one hundred candles");
+  assert.equal(oneHundred.items[0].quantity, 99);
+  assert.equal(oneHundred.total, 99 * 13.5);
+  const twoHundred = parseOrderText("two hundred mugs");
+  assert.equal(twoHundred.items[0].quantity, 99);
+  const thousand = parseOrderText("a thousand candles");
+  assert.equal(thousand.items[0].quantity, 99);
+});
+
+test("a scale remainder adds, and a scale survives an adjective and a dozen", () => {
+  const rest = parseOrderText("a hundred and five mugs");
+  assert.equal(rest.items[0].quantity, 99);
+  assert.equal(rest.total, 99 * 12);
+  const compoundRest = parseOrderText("one thousand and twenty-one candles");
+  assert.equal(compoundRest.items[0].quantity, 99);
+  const adj = parseOrderText("a hundred ceramic mugs");
+  assert.equal(adj.items[0].quantity, 99);
+  const dozen = parseOrderText("a hundred dozen mugs");
+  assert.equal(dozen.items[0].quantity, 99);
+});
+
+test("negation still covers scale phrasing and the standard example is unchanged", () => {
+  const d = parseOrderText("no hundred mugs, just a notebook");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "notebook");
+  assert.equal(d.total, 9.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("a quantity before 'more' drafts that quantity", () => {
+  const two = parseOrderText("two more mugs");
+  assert.equal(two.items.length, 1);
+  assert.equal(two.items[0].quantity, 2);
+  assert.equal(two.total, 24);
+  const digits = parseOrderText("3 more candles");
+  assert.equal(digits.items[0].quantity, 3);
+  assert.equal(digits.total, 40.5);
+  const dozen = parseOrderText("a dozen more mugs");
+  assert.equal(dozen.items[0].quantity, 12);
+  assert.equal(dozen.total, 144);
+  const summed = parseOrderText("two mugs and two more mugs");
+  assert.equal(summed.items.length, 1);
+  assert.equal(summed.items[0].quantity, 4);
+  assert.equal(summed.total, 48);
+});
+
+test("'more' survives a connector and an adjective, and alone invents nothing", () => {
+  const connector = parseOrderText("two more of the mugs");
+  assert.equal(connector.items[0].quantity, 2);
+  assert.equal(connector.total, 24);
+  const adj = parseOrderText("two more ceramic mugs");
+  assert.equal(adj.items[0].quantity, 2);
+  const bare = parseOrderText("more mugs please");
+  assert.equal(bare.items[0].quantity, 1);
+  assert.equal(bare.total, 12);
+});
+
+test("negation still covers 'more' phrasing and the standard example is unchanged", () => {
+  const d = parseOrderText("no more mugs, just a candle");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "candle");
+  assert.equal(d.total, 13.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a standalone cup still means a mug (catalog keyword)", () => {
   const d = parseOrderText("coffee cups");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);
   assert.equal(d.items.find((i) => i.sku === "mug").quantity, 1);
   assert.equal(d.total, 30);
+});
+
+test("hyphenated half-dozen forms draft six, not twelve", () => {
+  for (const text of ["half-dozen mugs", "half-a-dozen mugs", "a half-dozen mugs", "half-a-dozen ceramic mugs"]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].quantity, 6, text);
+    assert.equal(d.total, 72, text);
+  }
+});
+
+test("hyphenated counted dozen drafts the counted amount", () => {
+  const two = parseOrderText("two-dozen mugs");
+  assert.equal(two.items[0].quantity, 24);
+  assert.equal(two.total, 288);
+  const three = parseOrderText("three-dozen candles");
+  assert.equal(three.items[0].quantity, 36);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("negation covers half and hyphenated quantity phrasing", () => {
+  for (const text of [
+    "no half a dozen mugs, just a candle",
+    "no half-dozen mugs, just a candle",
+    "no half-a-dozen mugs, just a candle",
+    "no twenty-one mugs, just a candle",
+  ]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].sku, "candle", text);
+    assert.equal(d.total, 13.5, text);
+  }
 });

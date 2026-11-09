@@ -46,13 +46,39 @@ function detectTrailingQuantity(afterRaw) {
   return m ? parseInt(m[1], 10) : null;
 }
 
-function detectQuantity(beforeRaw, allowGroup = true) {
-  let before = beforeRaw;
+function stripFillerWords(before) {
+  let out = before;
   for (let i = 0; i < 3; i += 1) {
-    const tail = before.match(/([a-z]+)\s*$/);
+    const tail = out.match(/([a-z]+)\s*$/);
     if (!tail || !FILLER_WORDS.has(tail[1])) break;
-    before = before.slice(0, before.length - tail[0].length);
+    out = out.slice(0, out.length - tail[0].length);
   }
+  return out;
+}
+
+// Container words buyers put between a quantity and the item:
+// "3 boxes of candles", "2 sets of headphones", "two packs of coffee
+// beans". The container is not a catalog item of its own — in this demo
+// catalog each container counts as one unit of the item it holds — so
+// the word (and its "of") is skipped to expose the quantity written
+// before it. Before this, the container hid the quantity and every
+// such sentence silently drafted a quantity of 1, and a negated
+// container ("no boxes of candles") was drafted at all because the
+// container words were not recognised negation filler either.
+const CONTAINER_WORDS = [
+  "box", "boxes", "pack", "packs", "set", "sets",
+  "case", "cases", "bundle", "bundles", "carton", "cartons",
+];
+
+function detectQuantity(beforeRaw, allowGroup = true) {
+  // Hyphenated quantity phrases mean the same as their spaced forms:
+  // "half-dozen" and "half-a-dozen" are six, "two-dozen" is twenty-four.
+  // Before this, the hyphen hid the count from every rule below, so
+  // "half-dozen mugs" silently drafted twelve (double the spoken
+  // amount) and "two-dozen mugs" drafted twelve instead of twenty-four.
+  // Only the quantity look-back copy is normalised — keyword matching
+  // on the original text is untouched.
+  let before = stripFillerWords(String(beforeRaw || "").replace(/-/g, " "));
   // A quantity may be separated from its item by an "of" connector:
   // "two of the mugs", "three of those candles", "a dozen of the
   // mugs". Before this, the connector hid the quantity and every
@@ -62,12 +88,40 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // connector with no quantity before it still drafts 1.
   const connector = before.match(/\bof\s+(?:the|those|these|that|them)\s*$|\bof\s*$/);
   if (connector) before = before.slice(0, before.length - connector[0].length);
+  // Skip one trailing container word ("3 boxes of …" → "3"), then any
+  // catalog adjective that sat in front of it ("2 large boxes of …").
+  const container = before.match(/\b(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?)\s*$/);
+  if (container) before = stripFillerWords(before.slice(0, before.length - container[0].length));
+  // "More" between a quantity and its item: "two more mugs", "3 more
+  // candles", "a dozen more mugs", "two more of the mugs". Before
+  // this, "more" hid the quantity and every such sentence silently
+  // drafted a quantity of 1, and "no more mugs" was drafted at all
+  // because "more" was not recognised negation filler either. A bare
+  // "more mugs" still drafts 1 — "more" alone invents no quantity.
+  const more = before.match(/\bmore\s*$/);
+  if (more) before = stripFillerWords(before.slice(0, before.length - more[0].length));
   const halfDozen = before.match(/half\s+(?:a\s+)?dozen\s*(?:of\s*)?$/);
   if (halfDozen) return 6;
   // "A couple of dozen mugs" is two dozen — 24, not 12. The generic
   // dozen rule below cannot see the "couple" across the "of", so this
   // combined form is checked first.
   if (/(?:^|\s)(?:a\s+)?couple\s+of\s+dozen\s*(?:of\s*)?$/.test(before)) return 24;
+  // Scale words: "a hundred mugs", "one hundred candles", "two
+  // hundred notebooks", "a thousand candles" — a scale word multiplies
+  // the count before it (default one), and an "and" remainder adds
+  // ("a hundred and five mugs"). Before this, scale words were not
+  // number words at all, so every such sentence silently drafted a
+  // quantity of 1 — or, with a remainder, just the remainder ("a
+  // hundred and five mugs" drafted five). Quantities above 99 are
+  // clamped by the caller, as with every other form.
+  const scaleDozen = before.match(new RegExp(`(?:^|\\s)(?:(${QUANTITY_TOKEN})\\s+)?(hundred|thousand)\\s+dozen\\s*(?:of\\s*)?$`));
+  if (scaleDozen) return quantityValue(scaleDozen[1]) * (scaleDozen[2] === "thousand" ? 1000 : 100) * 12;
+  const scale = before.match(new RegExp(`(?:^|\\s)(?:(${QUANTITY_TOKEN})\\s+)?(hundred|thousand)(?:\\s+and\\s+(?:(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\\s](one|two|three|four|five|six|seven|eight|nine)|(${QUANTITY_TOKEN})))?\\s*$`));
+  if (scale) {
+    const base = quantityValue(scale[1]) * (scale[2] === "thousand" ? 1000 : 100);
+    const rest = scale[3] ? TENS_WORDS[scale[3]] + ONES_WORDS[scale[4]] : scale[5] ? quantityValue(scale[5]) : 0;
+    return base + rest;
+  }
   const dozen = before.match(new RegExp(`(${QUANTITY_TOKEN})?\\s*dozen\\s*(?:of\\s*)?$`));
   if (dozen) return quantityValue(dozen[1]) * 12;
   // Group words: "a pair of headphones", "a couple of mugs", "two
@@ -104,9 +158,9 @@ function detectQuantity(beforeRaw, allowGroup = true) {
 // cue aimed at an earlier item ("no mug and a candle") never leaks
 // onto the next one.
 const NEGATION_FILLER = new Set([
-  ...Object.keys(NUMBER_WORDS), "any", "the", "add", "include", "want",
+  ...Object.keys(NUMBER_WORDS), "any", "the", "more", "half", "add", "include", "want",
   "need", "buy", "get", "please", "pair", "pairs", "couple", "couples",
-  "of", "dozen", ...FILLER_WORDS,
+  "of", "dozen", "hundred", "thousand", "and", ...FILLER_WORDS, ...CONTAINER_WORDS,
 ]);
 
 function isNegatedMention(input, hitStart) {
@@ -120,7 +174,7 @@ function isNegatedMention(input, hitStart) {
   const before = input.slice(clauseStart, hitStart).trim();
   const cue = before.match(/(?:^|\s)(no|not|without|never|don't|dont|do not|exclude|remove)(?:\s+(.+))?$/);
   if (!cue) return false;
-  const between = (cue[2] || "").trim().split(/\s+/).filter(Boolean);
+  const between = (cue[2] || "").trim().split(/[\s-]+/).filter(Boolean);
   return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w));
 }
 
@@ -189,7 +243,9 @@ export function parseOrderText(text) {
     // Dozen forms count too: "a dozen mugs" is 12, "two dozen mugs" is 24,
     // and "half a dozen mugs" is 6 — before this, all of them silently
     // drafted a quantity of 1.
-    const before = input.slice(Math.max(0, hit.start - 24), hit.start);
+    // The look-back window is 48 chars so a full scale phrase
+    // ("one thousand and twenty-one …") still fits in front of its item.
+    const before = input.slice(Math.max(0, hit.start - 48), hit.start);
     // A trailing "xN" count is written for this exact mention, so it
     // takes precedence over any quantity word before the item.
     const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 12));

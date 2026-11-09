@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 28th cycle (2026-11-09) creation
-is verified again (order 0X1503868C460321C, CREATED, $45.50; status
+alone does not clear this gate. As of the 36th cycle (2026-11-10) creation
+is verified again (order 8MR87777YY6014117, CREATED, $45.50; status
 lookup returned CREATED with no capture, and an
 unapproved capture was refused by the real API with 422
 `ORDER_NOT_APPROVED`) but approval
@@ -26,13 +26,15 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD moved in the 27th cycle to commit
-  4919ca06311f38518db6487af9b6a5c8058c8787 (code and docs through the
-  27th cycle are reflected; the 27th-cycle DEVLOG entry itself and the
-  28th-cycle edits are local only until the next push).
+- Remote HEAD is still the 28th-cycle commit
+  6a66e4d925a3e461c2c7610bbf1be026d936cf2d (code and docs through the
+  28th cycle are reflected; the 29th- through 36th-cycle edits
+  are local only until the next push — the 29th-, 30th- and 31st-cycle
+  push attempts' sessions ended before completion and remote re-reads
+  confirmed the HEAD had not moved).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  43-test suite.
+  55-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -40,7 +42,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 28th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 36th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
