@@ -3,9 +3,22 @@ import { CATALOG } from "./catalog.js";
 const NUMBER_WORDS = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5,
   six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+  thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17,
+  eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40,
+  fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
 };
 
-const QUANTITY_TOKEN = String.raw`\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a|an`;
+const TENS_WORDS = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+const ONES_WORDS = {
+  one: 1, two: 2, three: 3, four: 4, five: 5,
+  six: 6, seven: 7, eight: 8, nine: 9,
+};
+
+const QUANTITY_TOKEN = String.raw`\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a|an`;
 
 function quantityValue(token) {
   if (token == null) return 1;
@@ -53,6 +66,11 @@ function detectQuantity(beforeRaw) {
   if (halfDozen) return 6;
   const dozen = before.match(new RegExp(`(${QUANTITY_TOKEN})?\\s*dozen\\s*(?:of\\s*)?$`));
   if (dozen) return quantityValue(dozen[1]) * 12;
+  // Compound tens: "twenty-one mugs" and "twenty one mugs" are 21.
+  // Before this, number words stopped at twelve, so every quantity
+  // from thirteen up silently drafted 1.
+  const compound = before.match(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\s](one|two|three|four|five|six|seven|eight|nine)\s*(?:x\s*)?$/);
+  if (compound) return TENS_WORDS[compound[1]] + ONES_WORDS[compound[2]];
   const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:x\\s*)?$`));
   if (m) return quantityValue(m[1]);
   return 1;

@@ -46,8 +46,9 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (37 tests) covers the natural-language parser
-(including summing repeated mentions of the same item in one sentence —
+The test suite (40 tests) covers the natural-language parser
+(including number words above twelve — "twenty notebooks" is twenty
+notebooks and "twenty-one mugs" is twenty-one, not one — summing repeated mentions of the same item in one sentence —
 "a mug and three mugs" is four mugs — dozen quantities: "a dozen
 mugs" is twelve mugs, "half a dozen" is six — quantities stated
 before a catalog adjective: "2 wireless headphones" is two headphones,

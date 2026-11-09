@@ -225,6 +225,32 @@ test("an of-the connector alone does not invent a quantity", () => {
   assert.equal(d.total, 12);
 });
 
+test("parses number words from thirteen to ninety", () => {
+  const d = parseOrderText("twenty notebooks and fifteen candles");
+  assert.equal(d.items.find((i) => i.sku === "notebook").quantity, 20);
+  assert.equal(d.items.find((i) => i.sku === "candle").quantity, 15);
+  assert.equal(d.total, 20 * 9.5 + 15 * 13.5);
+  const teen = parseOrderText("thirteen mugs");
+  assert.equal(teen.items[0].quantity, 13);
+  assert.equal(teen.total, 156);
+});
+
+test("parses compound tens quantities, hyphenated and spaced", () => {
+  const hyphen = parseOrderText("twenty-one mugs");
+  assert.equal(hyphen.items[0].quantity, 21);
+  assert.equal(hyphen.total, 252);
+  const spaced = parseOrderText("forty two candles");
+  assert.equal(spaced.items[0].quantity, 42);
+  assert.equal(spaced.total, 42 * 13.5);
+});
+
+test("larger number words do not break dozen or the standard example", () => {
+  const dozen = parseOrderText("two dozen candles");
+  assert.equal(dozen.items[0].quantity, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a standalone cup still means a mug (catalog keyword)", () => {
   const d = parseOrderText("coffee cups");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);

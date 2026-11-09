@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 25th cycle (2026-11-09) creation
-is verified again (order 2M500460LG0249640, CREATED, $45.50; status
+alone does not clear this gate. As of the 26th cycle (2026-11-09) creation
+is verified again (order 24Y693325A9971517, CREATED, $45.50; status
 lookup returned CREATED with no capture, and an
 unapproved capture was refused by the real API with 422
 `ORDER_NOT_APPROVED`) but approval
@@ -26,13 +26,13 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD moved in the 24th cycle to commit
-  ad553400913ca7eb05a1c537145bee1a57f115a9 (code and docs through the
-  24th cycle are reflected; the 24th-cycle DEVLOG entry itself and the
-  25th-cycle edits are local only until the next push).
+- Remote HEAD moved in the 25th cycle to commit
+  579b7f0d46b428eada3bfb9fd9f6c1d0effd62c9 (code and docs through the
+  25th cycle are reflected; the 25th-cycle DEVLOG entry itself and the
+  26th-cycle edits are local only until the next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  37-test suite.
+  40-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -40,7 +40,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 25th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 26th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
