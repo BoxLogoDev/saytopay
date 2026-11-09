@@ -32,10 +32,13 @@ sums its quantities instead of dropping the second mention, and quantities
 can be said the way people say them — digits, number words up to twelve,
 or dozens ("a dozen mugs" drafts twelve), and a quantity still counts
 when a catalog adjective sits between it and the item ("2 wireless
-headphones" drafts two, not one). Keywords match on word boundaries,
+headphones" drafts two, not one), or written after the item in
+shopping-list style ("mugs x3" drafts three). Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
-("mugs", "notebooks") still match. The home page shows the demo catalog (names and
+("mugs", "notebooks") still match. An item the buyer explicitly rules
+out is never drafted either: "no notebook, just 2 coffee beans" drafts
+only the coffee, and "a mug, not a candle" drafts only the mug. The home page shows the demo catalog (names and
 prices), so buyers can see what the app understands — clicking an item
 starts a draft for it — and an unmatched sentence gets a visible
 explanation instead of an empty screen. The draft is editable (quantities, removals), and
@@ -61,11 +64,13 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 27 passing) cover the parser (including summing
+- Tests (`npm test`, 33 passing) cover the parser (including summing
   repeated mentions of the same item in one sentence, dozen
   quantities — "a dozen mugs" drafts twelve — quantities stated
-  before a catalog adjective, and word-boundary matching so
-  "booking" never drafts a book while plurals still match), the public catalog
+  before a catalog adjective, trailing counts after the item
+  ("mugs x3"), word-boundary matching so
+  "booking" never drafts a book while plurals still match, and
+  explicit negation so "no notebook" never drafts a notebook), the public catalog
   listing, the server-side draft
   repricing (a draft claiming $0.01 per item is corrected to the $45.50
   catalog total before capture), the `.env` loader, the order status

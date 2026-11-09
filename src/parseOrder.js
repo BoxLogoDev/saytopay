@@ -23,6 +23,16 @@ const FILLER_WORDS = new Set([
   "mechanical", "canvas", "scented", "large", "small", "fresh",
 ]);
 
+// Quantity may also be written after the item, shopping-list style:
+// "mugs x3", "coffee beans x2", "headphones x 2". Before this, the
+// trailing count was silently ignored and every such sentence drafted
+// a quantity of 1. Only a digit count after x/× counts — a bare "x"
+// with no number invents nothing.
+function detectTrailingQuantity(afterRaw) {
+  const m = String(afterRaw || "").match(/^\s*[x×]\s*(\d{1,3})\b/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 function detectQuantity(beforeRaw) {
   let before = beforeRaw;
   for (let i = 0; i < 3; i += 1) {
@@ -37,6 +47,35 @@ function detectQuantity(beforeRaw) {
   const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:x\\s*)?$`));
   if (m) return quantityValue(m[1]);
   return 1;
+}
+
+// A mention the buyer explicitly negates must not be charged for:
+// "no notebook, just 2 coffee beans", "2 coffee beans without a
+// notebook", "a mug, not a candle", "don't add a mug" all drafted the
+// negated item before this check. The negation cue has to sit in the
+// same clause as the mention (text after the last , ; . ! ?) and only
+// filler between the cue and the item is allowed — determiners, a
+// quantity, a catalog adjective, or a verb like "add"/"want" — so a
+// cue aimed at an earlier item ("no mug and a candle") never leaks
+// onto the next one.
+const NEGATION_FILLER = new Set([
+  ...Object.keys(NUMBER_WORDS), "any", "the", "add", "include", "want",
+  "need", "buy", "get", "please", ...FILLER_WORDS,
+]);
+
+function isNegatedMention(input, hitStart) {
+  const clauseStart = Math.max(
+    input.lastIndexOf(",", hitStart - 1),
+    input.lastIndexOf(";", hitStart - 1),
+    input.lastIndexOf(".", hitStart - 1),
+    input.lastIndexOf("!", hitStart - 1),
+    input.lastIndexOf("?", hitStart - 1),
+  ) + 1;
+  const before = input.slice(clauseStart, hitStart).trim();
+  const cue = before.match(/(?:^|\s)(no|not|without|never|don't|dont|do not|exclude|remove)(?:\s+(.+))?$/);
+  if (!cue) return false;
+  const between = (cue[2] || "").trim().split(/\s+/).filter(Boolean);
+  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w));
 }
 
 function money(n) {
@@ -95,12 +134,20 @@ export function parseOrderText(text) {
   for (const hit of hits) {
     if (claimed.some(([s, e]) => hit.start < e && s < hit.end)) continue;
     claimed.push([hit.start, hit.end]);
+    // An explicitly negated mention ("no notebook", "not a candle")
+    // claims its span — so "book" inside a negated "notebook" cannot
+    // sneak back in — but contributes nothing to the draft. A later
+    // positive mention of the same item still counts.
+    if (isNegatedMention(input, hit.start)) continue;
     // Look backwards from the keyword for a quantity: "2 coffees", "two mugs".
     // Dozen forms count too: "a dozen mugs" is 12, "two dozen mugs" is 24,
     // and "half a dozen mugs" is 6 — before this, all of them silently
     // drafted a quantity of 1.
     const before = input.slice(Math.max(0, hit.start - 24), hit.start);
-    let quantity = detectQuantity(before);
+    // A trailing "xN" count is written for this exact mention, so it
+    // takes precedence over any quantity word before the item.
+    const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 12));
+    let quantity = trailing != null ? trailing : detectQuantity(before);
     quantity = Math.min(Math.max(quantity, 1), 99);
     // A buyer may mention the same item more than once in one sentence
     // ("a mug and three mugs", "1 coffee and 2 coffee beans"). Sum the

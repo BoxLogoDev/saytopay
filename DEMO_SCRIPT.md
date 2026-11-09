@@ -58,6 +58,78 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-09, 20th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  33/33. The parser now drops an explicitly negated item — "no
+  notebook, just 2 coffee beans" drafts only the coffee ($36) and
+  "a mug, not a candle" drafts only the mug — verified against the
+  real sandbox with an order created from the negated sentence
+  (order 5LS44628EE239502H, $36.00, coffee-beans ×2 only, CREATED)
+  and the filmed sentence re-created (order 8AY683334W458144A,
+  CREATED, $45.50; an unapproved capture was refused by the real API
+  with 422 `ORDER_NOT_APPROVED`). The filmed example sentence and
+  its $45.50 total are unchanged. The owner is traveling in Ishigaki;
+  the approval step still needs the owner's PayPal Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
+## Filming status (2026-11-09, 19th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  30/30. Real sandbox order creation for the filmed sentence was also
+  re-verified (order 4WL940150S167233X, CREATED, $45.50, approval URL
+  issued; status lookup returned CREATED with no capture, and an
+  unapproved capture was refused by the real API with 422
+  `ORDER_NOT_APPROVED`) — creation only, not capture. The submission
+  images (cover + flow, 1600x900) are still in place in the
+  submission-assets folder. The owner is traveling in Ishigaki; the
+  approval step still needs the owner's PayPal Developer sign-in.
+- `SUBMISSION_RUNBOOK.md` accuracy fix (this cycle): Gate 0 now cites
+  this cycle's creation order instead of the 18th cycle's, Step 1 notes
+  the 19th-cycle edits are local until the next push, and the
+  placeholder re-verification now cites the 19th cycle.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
+## Filming status (2026-11-09, 18th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  30/30. The parser now also reads a trailing count written after the
+  item ("mugs x3" drafts three, "coffee beans x2" drafts two) —
+  verified against the real sandbox with an order created from the
+  sentence "mugs x3" (order 5TE15262XE3265828, $36.00, quantity 3,
+  CREATED; an unapproved capture was refused with 422
+  `ORDER_NOT_APPROVED`) and the filmed sentence re-created
+  (order 2EL29556P6514500V, CREATED, approval URL issued). The filmed
+  example sentence and its $45.50 total are unchanged. The owner is
+  traveling in Ishigaki; the approval step still needs the owner's
+  PayPal Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
+## Filming status (2026-11-09, 17th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  27/27. Real sandbox order creation for the filmed sentence was also
+  re-verified (order 64431265S0790443D, CREATED, approval URL issued) —
+  creation only, not capture. The owner departed for Ishigaki today
+  (09:45 KST); the approval step still needs the owner's PayPal
+  Developer sign-in, so it cannot clear during travel.
+- `SUBMISSION_RUNBOOK.md` accuracy fix (this cycle): Gate 0 now cites
+  this cycle's creation order instead of the 16th cycle's, and Step 1
+  notes the 17th-cycle edits are local until the next push.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-09, 16th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),

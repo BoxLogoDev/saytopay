@@ -130,6 +130,74 @@ test("plural forms still match on word boundaries", () => {
   assert.equal(d.total, 2 * 9.5 + 3 * 12);
 });
 
+test("parses a trailing x-count after the item", () => {
+  const d = parseOrderText("mugs x3");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const spaced = parseOrderText("headphones x 2");
+  assert.equal(spaced.items[0].quantity, 2);
+  assert.equal(spaced.total, 118);
+});
+
+test("trailing x-count applies to its own item only", () => {
+  const d = parseOrderText("coffee beans x2 and a notebook");
+  assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 2);
+  assert.equal(d.items.find((i) => i.sku === "notebook").quantity, 1);
+  assert.equal(d.total, 45.5);
+  const next = parseOrderText("mugs x3 and candles");
+  assert.equal(next.items.find((i) => i.sku === "candle").quantity, 1);
+});
+
+test("trailing mentions are summed and a bare x invents nothing", () => {
+  const d = parseOrderText("mugs x2 and mugs x3");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 5);
+  assert.equal(d.total, 60);
+  const bare = parseOrderText("mugs x");
+  assert.equal(bare.items[0].quantity, 1);
+});
+
+test("an explicitly negated item is not drafted", () => {
+  const d = parseOrderText("no notebook, just 2 coffee beans");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "coffee-beans");
+  assert.equal(d.items[0].quantity, 2);
+  assert.equal(d.total, 36);
+  const without = parseOrderText("2 coffee beans without a notebook");
+  assert.equal(without.items.length, 1);
+  assert.equal(without.items[0].sku, "coffee-beans");
+  assert.equal(without.total, 36);
+  const notA = parseOrderText("a mug, not a candle");
+  assert.equal(notA.items.length, 1);
+  assert.equal(notA.items[0].sku, "mug");
+  assert.equal(notA.total, 12);
+});
+
+test("negation forms cover don't-add and but-no", () => {
+  const d = parseOrderText("don't add a mug, just a notebook");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "notebook");
+  assert.equal(d.total, 9.5);
+  const butNo = parseOrderText("coffee but no mug");
+  assert.equal(butNo.items.length, 1);
+  assert.equal(butNo.items[0].sku, "coffee-beans");
+  assert.equal(butNo.total, 18);
+});
+
+test("negation does not leak onto the next item or block a later positive mention", () => {
+  const d = parseOrderText("no mug and a candle");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "candle");
+  assert.equal(d.total, 13.5);
+  const later = parseOrderText("no mug, actually two mugs");
+  assert.equal(later.items.length, 1);
+  assert.equal(later.items[0].sku, "mug");
+  assert.equal(later.items[0].quantity, 2);
+  assert.equal(later.total, 24);
+});
+
 test("a standalone cup still means a mug (catalog keyword)", () => {
   const d = parseOrderText("coffee cups");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);

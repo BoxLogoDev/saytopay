@@ -11,8 +11,10 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 16th cycle (2026-11-09) creation
-is verified again (order 5HV59961GN348521G, CREATED, $45.50) but approval
+alone does not clear this gate. As of the 20th cycle (2026-11-09) creation
+is verified again (order 8AY683334W458144A, CREATED, $45.50; an
+unapproved capture was refused by the real API with 422
+`ORDER_NOT_APPROVED`) but approval
 → capture is still unverified: it needs the owner signed in to PayPal
 Developer in the browser so the sandbox buyer account password can be
 read from Sandbox Accounts (the value is never recorded), or the owner
@@ -23,12 +25,14 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD moved in the 14th cycle to commit
-  603b83682d9bef1ab38da9db85d13bed1a65265e (cycles 7–14 are reflected);
-  cycle 15 onward is local only until the next push.
+- Remote HEAD moved in the 16th cycle to commit
+  3edc595083ac7a2165da6780268ed09901ee1da0 (cycles 7–16 code and docs are
+  reflected; the 16th-cycle DEVLOG entry itself, the 17th-, 18th-, 19th-
+  and 20th-cycle edits, and this Step 1 note are local only until the
+  next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  27-test suite.
+  33-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -36,8 +40,9 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 16th cycle: `[REPO_URL]` was
-  already replaced with the real repository address).
+- No other placeholders exist (re-verified 20th cycle: `[REPO_URL]` was
+  already replaced with the real repository address; the only remaining
+  placeholders in the submission copy are the three listed above).
 
 ## Step 3 — Film Block B and upload the demo video
 
