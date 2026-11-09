@@ -593,3 +593,29 @@ PayPal AI Hackathon 2026 출품작 제작·QA 로그. 제출 마감 2026-11-13 0
 
 ### 다음 회차 제안
 - 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 기능 보강 카테고리(키트 범위 안의 작은 개선 1개)로 진행하되 데모·문안은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
+
+## 24회차 — 2026-11-09 17:34 KST · 카테고리: 기능 보강
+
+### 판단 근거
+- 직전 회차는 데모·문안(23회차)이었으므로 같은 카테고리를 반복하지 않았다. 23회차 제안대로, 주인님 재로그인 증거가 없어 승인→캡처 QA를 완료로 기록할 수 없는 상태에서 기능 보강 1단위를 수행했다. 최종 제출 단계(2026-11-12 18:00 이후)가 아니다. 주인님은 이시가키 여행 중이다.
+- 시작 시 재확인: `.env` 존재(Client ID/Secret 각 길이 80, 값은 기록하지 않음), `npm test` 36/36 통과 상태에서 시작했다.
+
+### 한 일 — 잘못된 JSON 요청을 502가 아닌 400으로 구분
+- 발견한 결함: 요청 본문이 깨진 JSON이면 모든 POST 엔드포인트가 502 `upstream_error`를 반환했다(실측: `/api/parse`에 `{bad json`, `/api/orders/capture`에 `not json`). 클라이언트 실수를 PayPal 장애처럼 보이게 해, 데모 중 네트워크·샌드박스 문제로 오인할 수 있는 위치다.
+- `src/server.js` — `readBody()`가 JSON 파싱 실패 시 클라이언트 오류로 표시(`invalid_json`)해 던지고, 핸들러 catch가 이를 400으로 답하게 했다. PayPal 상류 오류의 기존 502 매핑은 그대로다. 빈 본문은 종전대로 빈 객체로 처리된다.
+- `test/flow.test.js` — 테스트 1개 추가(4개 POST 엔드포인트 전부 400 `invalid_json` + 빈 본문 200 유지) — 총 36개 → 37개.
+- `README.md`·`DEVPOST_COPY.md`·`DEMO_SCRIPT.md`·`FILMING_RUNBOOK.md`·`SUBMISSION_RUNBOOK.md` 정비: 400 동작 설명과 테스트 수 37개를 실측값으로 갱신, DEMO_SCRIPT 촬영 가능 상태에 24회차 블록 추가, SUBMISSION_RUNBOOK Gate 0 최신 생성 주문과 Step 1 원격 HEAD를 이번 회차 기준으로 교체. 데모 예시 문장과 $45.50 총액은 변하지 않았다.
+- 작은 단위라 Muse Code 위임 대신 직접 수행했다(종전 회차와 같은 사유).
+
+### 감독 검증 (직접 실행)
+- `npm test` 37/37 통과. 수정 전후 대조: 수정 전 502 `upstream_error`였던 2개 경로가 수정 후 400 `invalid_json`으로 바뀌고, 표준 예시는 $45.50 그대로임을 확인.
+- 실제 서버 기동 스모크: `/api/health` 정상(sandbox, credentialsConfigured=true), 잘못된 JSON 400, `/api/parse` 표준 예시 $45.50, `/api/catalog` 12개 품목, UI 서빙 정상. 검증용 서버는 종료까지 확인했다.
+- **실샌드박스 주문 생성 재검증**: 데모 문장(`2 coffee beans and a notebook`)만으로 `POST /api/orders` → 실제 샌드박스 주문 생성 성공(주문 99121525LY221404D, CREATED, 승인 URL 발급), `GET /api/orders/:id` 조회로 CREATED·captureId=null 확인, 미승인 캡처는 실제 API가 422 `ORDER_NOT_APPROVED`로 거부. 승인·캡처를 한 것으로 기록하지 않으며, 이 CREATED 주문 ID로 DEVPOST_COPY 빈칸을 채우지 않았다.
+- 빈칸 전수 검사: 남은 플레이스홀더는 [SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]·[VIDEO_URL]뿐이며 모두 Gate 0·영상 제작에 묶인 미검증 항목이라 그대로 뒀다. 공개 자료 개인정보·회사 표현 스캔: `.env`·DEVLOG 제외 전체에서 실명·연락처·소속·회사(LS) 표현 0건.
+- **공개 저장소 동기화 성공**: 스냅샷 푸시 완료 — 커밋 ad553400913ca7eb05a1c537145bee1a57f115a9(파일 25개, 202,882바이트, dry-run 사전 통과). 푸시 명령 자체는 제한 시간에 출력 없이 끝났으나 GitHub 읽기 도구(list_commits)로 원격 HEAD가 이 커밋으로 이동했음을 직접 확인했다. 단, 이 24회차 로그 항목 자체는 푸시 이후에 쓴 것이라 로컬에만 있으며 다음 푸시에 함께 올라간다.
+
+### 완료로 기록하지 않는 것 (막힌 지점 — 변동 없음, 1건)
+1. **구매자 승인 → 캡처 미검증** — 주인님이 브라우저에서 PayPal Developer에 다시 로그인해 주시면 다음 QA 회차가 Sandbox Accounts 구매자 비밀번호 확인(값은 기록하지 않음) → 승인 → 캡처·capture ID 확보 → DEVPOST_COPY 빈칸([SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]) 실측값 기입까지 수행한다. 대안으로 승인 화면에서 주인님이 직접 승인만 해 주셔도 캡처는 API로 마칠 수 있다. 제출 마감 2026-11-13 05:00 KST가 이시가키 귀국(11/13 16:10)보다 먼저이므로, 승인 1건은 11/12 18:00 최종 제출 단계 전까지 풀려야 한다.
+
+### 다음 회차 제안
+- 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 데모·문안 카테고리로 진행하되 기능 보강은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.

@@ -58,6 +58,28 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-09, 25th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  37/37. Real sandbox order creation for the filmed sentence was also
+  re-verified (order 2M500460LG0249640, CREATED, $45.50, approval URL
+  issued; status lookup returned CREATED with no capture, and an
+  unapproved capture was refused by the real API with 422
+  `ORDER_NOT_APPROVED`) — creation only, not capture. The submission
+  images (cover + flow, 1600x900) are still in place in the
+  submission-assets folder. The owner is traveling in Ishigaki; the
+  approval step still needs the owner's PayPal Developer sign-in.
+- `SUBMISSION_RUNBOOK.md` accuracy fix (this cycle): Gate 0 now cites
+  this cycle's creation order instead of the 24th cycle's, Step 1 now
+  cites the verified 24th-cycle remote HEAD
+  (ad553400913ca7eb05a1c537145bee1a57f115a9) instead of the stale
+  23rd-cycle commit, and the placeholder re-verification now cites
+  the 25th cycle.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-09, 24th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
