@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 22nd cycle (2026-11-09) creation
-is verified again (order 1SV70090FT5481130, CREATED, $45.50; status
+alone does not clear this gate. As of the 23rd cycle (2026-11-09) creation
+is verified again (order 9DX60970CC199763K, CREATED, $45.50; status
 lookup returned CREATED with no capture, and an
 unapproved capture was refused by the real API with 422
 `ORDER_NOT_APPROVED`) but approval
@@ -26,10 +26,10 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD moved in the 20th cycle to commit
-  d5042903844d440b94589adf5946e74cfca403b1 (cycles 7–20 code and docs are
-  reflected; the 20th-cycle DEVLOG entry itself, this Step 1 note, and
-  the 21st- and 22nd-cycle edits are local only until the next push).
+- Remote HEAD moved in the 22nd cycle to commit
+  5025e251b0ae192df06f26dab87b24170bca9341 (cycles 7–22 code and docs are
+  reflected; the 22nd-cycle DEVLOG entry itself, this Step 1 note,
+  and the 23rd-cycle edits are local only until the next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
   36-test suite.
@@ -40,7 +40,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 22nd cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 23rd cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

@@ -543,3 +543,29 @@ PayPal AI Hackathon 2026 출품작 제작·QA 로그. 제출 마감 2026-11-13 0
 
 ### 다음 회차 제안
 - 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 기능 보강 카테고리(키트 범위 안의 작은 개선 1개)로 진행하되 데모·문안은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
+
+## 22회차 — 2026-11-09 15:34 KST · 카테고리: 기능 보강
+
+### 판단 근거
+- 직전 회차는 데모·문안(21회차)이었으므로 같은 카테고리를 반복하지 않았다. 21회차 제안대로, 주인님 재로그인 증거가 없어 승인→캡처 QA를 완료로 기록할 수 없는 상태에서 기능 보강 1단위를 수행했다. 최종 제출 단계(2026-11-12 18:00 이후)가 아니다. 주인님은 이시가키 여행 중이다.
+- 시작 시 재확인: `.env` 존재(Client ID/Secret 각 길이 80, 값은 기록하지 않음), `npm test` 33/33 통과 상태에서 시작했다.
+
+### 한 일 — 수량과 품목 사이의 "of the" 연결 표현을 건너뛰는 수량 인식
+- 발견한 결함: 수량과 품목 사이에 "of the/those"가 끼면 수량이 전부 1로 조용히 떨어졌다. 실측(수정 전): `two of the mugs` → 머그 1개($12), `three of those candles` → 1개, `2 of the mugs` → 1개, `a dozen of the mugs` → 1개, `I want two of the mugs and three of the candles` → 둘 다 1개($25.50). 금액이 실제 주문으로 그대로 이어지는 위치라, 데모 문장 밖의 자연스러운 말투에서 "말한 대로 주문된다"는 핵심 약속이 깨지는 결함이다.
+- `src/parseOrder.js` — `detectQuantity()`가 카탈로그 형용사를 건너뛴 뒤, 뒤에 남은 `of (the|those|these|that|them)` 또는 bare `of` 연결 표현을 한 번 벗겨 내고 기존 숫자·수사·dozen·half dozen 판정을 적용하게 했다. 연결 표현만 있고 수량이 없으면 종전대로 1개다.
+- `test/parseOrder.test.js` — 테스트 3개 추가(of 연결 수량, of 연결+형용사가 낀 dozen, 연결 표현만으로는 수량을 만들지 않음) — 총 33개 → 36개.
+- `README.md`·`DEVPOST_COPY.md`·`DEMO_SCRIPT.md`·`FILMING_RUNBOOK.md`·`SUBMISSION_RUNBOOK.md` 정비: of 연결 동작 설명과 테스트 수 36개를 실측값으로 갱신, DEMO_SCRIPT 촬영 가능 상태에 22회차 블록 추가, SUBMISSION_RUNBOOK Gate 0 최신 생성 주문을 이번 회차 주문으로 교체. 데모 예시 문장과 $45.50 총액은 변하지 않았다.
+- 작은 단위라 Muse Code 위임 대신 직접 수행했다(종전 회차와 같은 사유).
+
+### 감독 검증 (직접 실행)
+- `npm test` 36/36 통과. 수정 전후 대조: 위 문장들이 각각 머그 2개($24)·캔들 3개($40.50)·머그 12개($144)로 바뀌고, `2 of the ceramic mugs`도 2개, 표준 예시 `2 coffee beans and a notebook`은 $45.50, `of the mugs please`는 1개 그대로임을 확인.
+- 실제 서버 기동 스모크: `/api/health` 정상(sandbox, credentialsConfigured=true), `/api/parse` 표준 예시 $45.50·신규 문장 머그 2개 $24, `/api/catalog` 12개 품목, UI 서빙(제목) 정상. 검증용 서버는 종료까지 확인했다.
+- **신규 동작을 실샌드박스로 검증**: 문장(`two of the mugs`)만으로 `POST /api/orders` → 실제 샌드박스 주문 생성 성공(주문 4GE76849PK502954L, CREATED, 승인 URL 발급), `GET /api/orders/:id` 조회로 PayPal 응답의 금액 $24.00·수량 2·SKU mug가 일치함을 확인했다. 미승인 캡처는 실제 API가 422 `ORDER_NOT_APPROVED`로 거부. 표준 문장 주문도 재생성했다(주문 1SV70090FT5481130, CREATED, $45.50, coffee-beans×2+notebook×1). 승인·캡처를 한 것으로 기록하지 않는다.
+- 빈칸 전수 검사: 남은 플레이스홀더는 [SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]·[VIDEO_URL]뿐이며 모두 Gate 0·영상 제작에 묶인 미검증 항목이라 그대로 뒀다. 공개 자료 개인정보·회사 표현 스캔: `.env`·DEVLOG 제외 전체에서 실명·연락처·소속·회사(LS) 표현 0건. 현행 문서의 낡은 테스트 수("33 passing" 등) 잔존 0건.
+- **공개 저장소 동기화 성공**: 스냅샷 푸시 완료 — 커밋 5025e251b0ae192df06f26dab87b24170bca9341(파일 25개, 189,491바이트, dry-run 사전 통과). 원격 HEAD가 20회차 커밋 d5042903에서 이동해 21·22회차 코드·문서 변경분이 반영됐다. 단, 이 22회차 로그 항목과 그 직후의 SUBMISSION_RUNBOOK Step 1 HEAD 갱신은 푸시 이후에 쓴 것이라 로컬에만 있으며 다음 푸시에 함께 올라간다.
+
+### 완료로 기록하지 않는 것 (막힌 지점 — 변동 없음, 1건)
+1. **구매자 승인 → 캡처 미검증** — 주인님이 브라우저에서 PayPal Developer에 다시 로그인해 주시면 다음 QA 회차가 Sandbox Accounts 구매자 비밀번호 확인(값은 기록하지 않음) → 승인 → 캡처·capture ID 확보 → DEVPOST_COPY 빈칸([SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]) 실측값 기입까지 수행한다. 대안으로 승인 화면에서 주인님이 직접 승인만 해 주셔도 캡처는 API로 마칠 수 있다. 제출 마감 2026-11-13 05:00 KST가 이시가키 귀국(11/13 16:10)보다 먼저이므로, 승인 1건은 11/12 18:00 최종 제출 단계 전까지 풀려야 한다.
+
+### 다음 회차 제안
+- 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 데모·문안 카테고리로 진행하되 기능 보강은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
