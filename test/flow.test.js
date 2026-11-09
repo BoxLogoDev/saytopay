@@ -252,3 +252,27 @@ test("orders endpoint refuses to run without credentials", async (t) => {
   const body = await res.json();
   assert.equal(body.error, "paypal_credentials_missing");
 });
+
+test("malformed JSON is a 400 client error, not a 502 upstream error", async (t) => {
+  const app = createServer({ clientId: "x", clientSecret: "y", base: "http://127.0.0.1:1", envName: "sandbox" });
+  await new Promise((r) => app.listen(0, "127.0.0.1", r));
+  t.after(() => app.close());
+  const base = `http://127.0.0.1:${app.address().port}`;
+  for (const path of ["/api/parse", "/api/draft/normalize", "/api/orders", "/api/orders/capture"]) {
+    const res = await fetch(`${base}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{not json",
+    });
+    assert.equal(res.status, 400, path);
+    const body = await res.json();
+    assert.equal(body.error, "invalid_json", path);
+  }
+  // A well-formed empty body still parses as before.
+  const ok = await fetch(`${base}/api/parse`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "",
+  });
+  assert.equal(ok.status, 200);
+});

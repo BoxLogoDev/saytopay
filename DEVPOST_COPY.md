@@ -66,7 +66,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 36 passing) cover the parser (including summing
+- Tests (`npm test`, 37 passing) cover the parser (including summing
   repeated mentions of the same item in one sentence, dozen
   quantities — "a dozen mugs" drafts twelve — quantities stated
   before a catalog adjective, trailing counts after the item
@@ -74,7 +74,8 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
-  drafts two), the public catalog
+  drafts two), malformed JSON bodies answered as `400 invalid_json`
+  instead of a misleading upstream error, the public catalog
   listing, the server-side draft
   repricing (a draft claiming $0.01 per item is corrected to the $45.50
   catalog total before capture), the `.env` loader, the order status

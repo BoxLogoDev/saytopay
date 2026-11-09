@@ -25,7 +25,18 @@ async function readBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
   const text = Buffer.concat(chunks).toString("utf8");
-  return text ? JSON.parse(text) : {};
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    // A malformed body is the client's error, not PayPal's: mark it so the
+    // handler answers 400 invalid_json instead of a misleading
+    // 502 upstream_error that suggests the sandbox is down.
+    const err = new Error("Request body is not valid JSON.");
+    err.isClientError = true;
+    err.code = "invalid_json";
+    throw err;
+  }
 }
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
@@ -119,6 +130,9 @@ export function createServer(paypalCfg = config) {
 
       return json(res, 404, { error: "not_found" });
     } catch (err) {
+      if (err.isClientError) {
+        return json(res, 400, { error: err.code || "bad_request", message: String(err.message || err) });
+      }
       return json(res, 502, { error: "upstream_error", message: String(err.message || err) });
     }
   });

@@ -46,7 +46,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (36 tests) covers the natural-language parser
+The test suite (37 tests) covers the natural-language parser
 (including summing repeated mentions of the same item in one sentence —
 "a mug and three mugs" is four mugs — dozen quantities: "a dozen
 mugs" is twelve mugs, "half a dozen" is six — quantities stated
@@ -69,7 +69,8 @@ lookup across CREATED → APPROVED → COMPLETED, and a full create →
 approve → capture run
 against a local stand-in for the PayPal API (same app code,
 `PAYPAL_API_BASE` pointed at the stand-in), including the refusal to
-capture before approval.
+capture before approval. Malformed JSON request bodies are answered
+with `400 invalid_json`, not a misleading `502 upstream_error`.
 
 ## Layout
 
