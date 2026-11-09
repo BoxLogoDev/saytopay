@@ -198,6 +198,33 @@ test("negation does not leak onto the next item or block a later positive mentio
   assert.equal(later.total, 24);
 });
 
+test("quantity survives an of-the connector before the item", () => {
+  const d = parseOrderText("two of the mugs and three of those candles");
+  assert.equal(d.items.find((i) => i.sku === "mug").quantity, 2);
+  assert.equal(d.items.find((i) => i.sku === "candle").quantity, 3);
+  assert.equal(d.total, 2 * 12 + 3 * 13.5);
+  const digits = parseOrderText("2 of the mugs");
+  assert.equal(digits.items[0].quantity, 2);
+  assert.equal(digits.total, 24);
+});
+
+test("dozen quantity survives an of-the connector and an adjective", () => {
+  const d = parseOrderText("a dozen of the mugs");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 12);
+  assert.equal(d.total, 144);
+  const adj = parseOrderText("2 of the ceramic mugs");
+  assert.equal(adj.items[0].quantity, 2);
+  assert.equal(adj.total, 24);
+});
+
+test("an of-the connector alone does not invent a quantity", () => {
+  const d = parseOrderText("of the mugs please");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 1);
+  assert.equal(d.total, 12);
+});
+
 test("a standalone cup still means a mug (catalog keyword)", () => {
   const d = parseOrderText("coffee cups");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);

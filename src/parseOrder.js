@@ -40,6 +40,15 @@ function detectQuantity(beforeRaw) {
     if (!tail || !FILLER_WORDS.has(tail[1])) break;
     before = before.slice(0, before.length - tail[0].length);
   }
+  // A quantity may be separated from its item by an "of" connector:
+  // "two of the mugs", "three of those candles", "a dozen of the
+  // mugs". Before this, the connector hid the quantity and every
+  // such sentence silently drafted a quantity of 1. Stripping one
+  // trailing "of (the|those|these|that|them)" — or a bare "of" —
+  // exposes the quantity (or dozen form) written before it. A
+  // connector with no quantity before it still drafts 1.
+  const connector = before.match(/\bof\s+(?:the|those|these|that|them)\s*$|\bof\s*$/);
+  if (connector) before = before.slice(0, before.length - connector[0].length);
   const halfDozen = before.match(/half\s+(?:a\s+)?dozen\s*(?:of\s*)?$/);
   if (halfDozen) return 6;
   const dozen = before.match(new RegExp(`(${QUANTITY_TOKEN})?\\s*dozen\\s*(?:of\\s*)?$`));
