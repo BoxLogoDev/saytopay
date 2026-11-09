@@ -58,6 +58,37 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-09, 16th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  27/27. The parser now matches keywords on word boundaries only —
+  "booking" no longer drafts a book, "cupcake" no longer drafts a
+  mug, and plurals still match — verified against the real sandbox
+  with an order created from the sentence "booked a shirt for the
+  meeting" (order 00X56668XY460732A, $24.00, t-shirt only, CREATED)
+  and a false-positive sentence refused as an empty order (400).
+  The filmed example sentence and its $45.50 total are unchanged.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
+## Filming status (2026-11-09, 15th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  24/24. Real sandbox order creation for the filmed sentence was also
+  re-verified (order 3AF46217X36820646, CREATED, approval URL issued) —
+  creation only, not capture.
+- `SUBMISSION_RUNBOOK.md` accuracy fix (this cycle): its Step 1 still
+  claimed the remote HEAD was the 6th-cycle commit and the suite was
+  21 tests. The remote HEAD actually moved in the 14th cycle
+  (603b83682d9bef1ab38da9db85d13bed1a65265e) and the suite is 24 tests;
+  Gate 0 and the placeholder check now cite the 15th cycle.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-09, 14th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),

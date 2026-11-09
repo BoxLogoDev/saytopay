@@ -46,12 +46,14 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (24 tests) covers the natural-language parser
+The test suite (27 tests) covers the natural-language parser
 (including summing repeated mentions of the same item in one sentence —
 "a mug and three mugs" is four mugs — dozen quantities: "a dozen
-mugs" is twelve mugs, "half a dozen" is six — and quantities stated
+mugs" is twelve mugs, "half a dozen" is six — quantities stated
 before a catalog adjective: "2 wireless headphones" is two headphones,
-"a dozen ceramic mugs" is twelve mugs), the
+"a dozen ceramic mugs" is twelve mugs — and word-boundary matching:
+"booking" does not draft a book and "cupcake" does not draft a mug,
+while plurals like "mugs" and "notebooks" still match), the
 public catalog listing (names and prices only — parser keywords never
 leak), the
 server-side draft repricing (a price-tampered draft is corrected to the

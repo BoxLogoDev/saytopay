@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 13th cycle (2026-11-09) creation
-is verified again (order 21352014JM528924L, CREATED, $45.50) but approval
+alone does not clear this gate. As of the 16th cycle (2026-11-09) creation
+is verified again (order 5HV59961GN348521G, CREATED, $45.50) but approval
 → capture is still unverified: it needs the owner signed in to PayPal
 Developer in the browser so the sandbox buyer account password can be
 read from Sandbox Accounts (the value is never recorded), or the owner
@@ -23,11 +23,12 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is still the 6th-cycle commit
-  4ab75f41d924451dcb82fd24d9f7753e49ed7d05; cycles 7–13 are local only.
+- Remote HEAD moved in the 14th cycle to commit
+  603b83682d9bef1ab38da9db85d13bed1a65265e (cycles 7–14 are reflected);
+  cycle 15 onward is local only until the next push.
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  21-test suite.
+  27-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -35,7 +36,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (verified 13th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 16th cycle: `[REPO_URL]` was
   already replaced with the real repository address).
 
 ## Step 3 — Film Block B and upload the demo video

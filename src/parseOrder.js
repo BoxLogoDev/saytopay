@@ -53,6 +53,27 @@ function money(n) {
  * ({ items: [{ sku, name, quantity, unitPrice }], total, currency })
  * and the rest of the PayPal flow is unchanged.
  */
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Find keyword hits on word boundaries only. A plain substring search
+// charged buyers for items they never named: "booking" drafted a book
+// ($16), "cupcake" drafted a mug via "cup" ($12), and "plantation tour
+// and a mousepad" drafted a plant and a mouse ($49). A keyword now
+// matches only when it is not flanked by letters, with an optional
+// plural suffix ("mugs", "candles", "notebooks") counted as part of
+// the same hit — plurals worked before via the substring and must
+// keep working.
+function findKeywordHits(input, product, keyword) {
+  const re = new RegExp(`(?<![a-z])${escapeRegExp(keyword)}(?:es|s)?(?![a-z])`, "g");
+  const found = [];
+  for (const m of input.matchAll(re)) {
+    found.push({ product, keyword, start: m.index, end: m.index + m[0].length });
+  }
+  return found;
+}
+
 export function parseOrderText(text) {
   const input = String(text || "").toLowerCase();
   if (!input.trim()) {
@@ -64,13 +85,7 @@ export function parseOrderText(text) {
   const hits = [];
   for (const product of CATALOG) {
     for (const keyword of product.keywords) {
-      let from = 0;
-      for (;;) {
-        const idx = input.indexOf(keyword, from);
-        if (idx === -1) break;
-        hits.push({ product, keyword, start: idx, end: idx + keyword.length });
-        from = idx + keyword.length;
-      }
+      hits.push(...findKeywordHits(input, product, keyword));
     }
   }
   hits.sort((a, b) => b.keyword.length - a.keyword.length || a.start - b.start);

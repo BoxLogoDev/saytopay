@@ -106,3 +106,33 @@ test("longest keyword wins per product (book vs notebook)", () => {
   assert.equal(d.items.length, 1);
   assert.equal(d.items[0].sku, "notebook");
 });
+
+test("keywords inside other words do not draft items", () => {
+  for (const text of [
+    "I need a booking for tonight",
+    "a cupcake and a teaspoon",
+    "plantation tour and a mousepad",
+  ]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 0, text);
+    assert.equal(d.total, 0, text);
+  }
+  const booked = parseOrderText("booked a shirt for the meeting");
+  assert.equal(booked.items.length, 1);
+  assert.equal(booked.items[0].sku, "tshirt");
+  assert.equal(booked.total, 24);
+});
+
+test("plural forms still match on word boundaries", () => {
+  const d = parseOrderText("2 notebooks and 3 cups");
+  assert.equal(d.items.find((i) => i.sku === "notebook").quantity, 2);
+  assert.equal(d.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(d.total, 2 * 9.5 + 3 * 12);
+});
+
+test("a standalone cup still means a mug (catalog keyword)", () => {
+  const d = parseOrderText("coffee cups");
+  assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);
+  assert.equal(d.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(d.total, 30);
+});
