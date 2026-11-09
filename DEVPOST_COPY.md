@@ -27,7 +27,9 @@ SayToPay takes one natural-language sentence (for example, "2 coffee beans
 and a notebook"), converts it into a structured order draft with items,
 quantities, and a total, lets the buyer review the draft, and then completes
 a real PayPal sandbox payment through the Orders flow: create order →
-buyer approval → capture. Quantities said as number words work past
+buyer approval → capture. Group words count too — "a pair of
+headphones" and "a couple of mugs" draft two, and "two pairs" drafts
+four. Quantities said as number words work past
 twelve too — "twenty notebooks" drafts twenty and "twenty-one mugs"
 drafts twenty-one, not one. Mentioning the same item twice in the sentence
 sums its quantities instead of dropping the second mention, and quantities
@@ -68,7 +70,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 40 passing) cover the parser (including number
+- Tests (`npm test`, 43 passing) cover the parser (including group
+  words — "a pair of headphones" drafts two and "two pairs" drafts
+  four — number
   words above twelve and compound tens — "twenty notebooks" drafts
   twenty, "twenty-one mugs" drafts twenty-one — summing
   repeated mentions of the same item in one sentence, dozen

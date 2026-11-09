@@ -58,6 +58,27 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-09, 28th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  43/43. The parser now understands group words — "a pair of
+  headphones" drafts two ($118) and "two pairs of headphones" drafts
+  four — verified against the real sandbox with an order created from
+  that sentence (order 3L7524324P675093L, $118.00, headphones ×2,
+  CREATED; status lookup returned the same items and amount) and the
+  filmed sentence re-created (order 0X1503868C460321C, CREATED,
+  $45.50, status lookup CREATED with no capture; an unapproved
+  capture was refused by the real API with 422
+  `ORDER_NOT_APPROVED`). The filmed example sentence and its $45.50
+  total are unchanged. The submission images (cover + flow, 1600x900)
+  are still in place in the submission-assets folder. The owner is
+  traveling in Ishigaki; the approval step still needs the owner's
+  PayPal Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-09, 27th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),

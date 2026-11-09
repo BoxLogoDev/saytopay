@@ -46,7 +46,7 @@ function detectTrailingQuantity(afterRaw) {
   return m ? parseInt(m[1], 10) : null;
 }
 
-function detectQuantity(beforeRaw) {
+function detectQuantity(beforeRaw, allowGroup = true) {
   let before = beforeRaw;
   for (let i = 0; i < 3; i += 1) {
     const tail = before.match(/([a-z]+)\s*$/);
@@ -64,8 +64,26 @@ function detectQuantity(beforeRaw) {
   if (connector) before = before.slice(0, before.length - connector[0].length);
   const halfDozen = before.match(/half\s+(?:a\s+)?dozen\s*(?:of\s*)?$/);
   if (halfDozen) return 6;
+  // "A couple of dozen mugs" is two dozen — 24, not 12. The generic
+  // dozen rule below cannot see the "couple" across the "of", so this
+  // combined form is checked first.
+  if (/(?:^|\s)(?:a\s+)?couple\s+of\s+dozen\s*(?:of\s*)?$/.test(before)) return 24;
   const dozen = before.match(new RegExp(`(${QUANTITY_TOKEN})?\\s*dozen\\s*(?:of\\s*)?$`));
   if (dozen) return quantityValue(dozen[1]) * 12;
+  // Group words: "a pair of headphones", "a couple of mugs", "two
+  // pairs of headphones" — a pair/couple is two of the item, and a
+  // counted number of pairs multiplies ("two pairs" is four). Before
+  // this, every such sentence silently drafted a quantity of 1. The
+  // count before the group word is read by recursing on the prefix
+  // (so "a dozen pairs" is 24 and "twenty-one pairs" is 42); the
+  // recursion is one level only.
+  if (allowGroup) {
+    const group = before.match(/\b(?:pairs?|couples?)\s*$/);
+    if (group) {
+      const prefix = before.slice(0, before.length - group[0].length);
+      return detectQuantity(prefix, false) * 2;
+    }
+  }
   // Compound tens: "twenty-one mugs" and "twenty one mugs" are 21.
   // Before this, number words stopped at twelve, so every quantity
   // from thirteen up silently drafted 1.
@@ -87,7 +105,8 @@ function detectQuantity(beforeRaw) {
 // onto the next one.
 const NEGATION_FILLER = new Set([
   ...Object.keys(NUMBER_WORDS), "any", "the", "add", "include", "want",
-  "need", "buy", "get", "please", ...FILLER_WORDS,
+  "need", "buy", "get", "please", "pair", "pairs", "couple", "couples",
+  "of", "dozen", ...FILLER_WORDS,
 ]);
 
 function isNegatedMention(input, hitStart) {

@@ -251,6 +251,39 @@ test("larger number words do not break dozen or the standard example", () => {
   assert.equal(standard.total, 45.5);
 });
 
+test("a pair or a couple of an item drafts two of it", () => {
+  const pair = parseOrderText("a pair of headphones");
+  assert.equal(pair.items.length, 1);
+  assert.equal(pair.items[0].sku, "headphones");
+  assert.equal(pair.items[0].quantity, 2);
+  assert.equal(pair.total, 118);
+  const couple = parseOrderText("a couple of mugs");
+  assert.equal(couple.items[0].quantity, 2);
+  assert.equal(couple.total, 24);
+  const bare = parseOrderText("a couple mugs");
+  assert.equal(bare.items[0].quantity, 2);
+});
+
+test("counted pairs multiply, and a couple of dozen is twenty-four", () => {
+  const two = parseOrderText("two pairs of headphones");
+  assert.equal(two.items[0].quantity, 4);
+  assert.equal(two.total, 236);
+  const dozenPairs = parseOrderText("a dozen pairs of headphones");
+  assert.equal(dozenPairs.items[0].quantity, 24);
+  const coupleDozen = parseOrderText("a couple of dozen mugs");
+  assert.equal(coupleDozen.items[0].quantity, 24);
+  assert.equal(coupleDozen.total, 288);
+});
+
+test("negation still covers pair phrasing and the standard example is unchanged", () => {
+  const d = parseOrderText("no pair of mugs, just a notebook");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "notebook");
+  assert.equal(d.total, 9.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a standalone cup still means a mug (catalog keyword)", () => {
   const d = parseOrderText("coffee cups");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 1);
