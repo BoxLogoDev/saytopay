@@ -436,3 +436,40 @@ test("negation covers half and hyphenated quantity phrasing", () => {
     assert.equal(d.total, 13.5, text);
   }
 });
+
+test("quantity survives a general descriptive adjective before the item", () => {
+  const d = parseOrderText("2 black headphones and 3 red mugs");
+  assert.equal(d.items.find((i) => i.sku === "headphones").quantity, 2);
+  assert.equal(d.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(d.total, 2 * 59 + 3 * 12);
+  const stacked = parseOrderText("2 large red mugs");
+  assert.equal(stacked.items[0].quantity, 2);
+  assert.equal(stacked.total, 24);
+  const material = parseOrderText("2 leather backpacks");
+  assert.equal(material.items[0].quantity, 2);
+  assert.equal(material.total, 128);
+});
+
+test("dozen, pair, and of-the quantities survive a general adjective", () => {
+  const dozen = parseOrderText("a dozen red candles");
+  assert.equal(dozen.items[0].quantity, 12);
+  assert.equal(dozen.total, 162);
+  const pair = parseOrderText("a pair of black headphones");
+  assert.equal(pair.items[0].quantity, 2);
+  assert.equal(pair.total, 118);
+  const connector = parseOrderText("2 of the black mugs");
+  assert.equal(connector.items[0].quantity, 2);
+  assert.equal(connector.total, 24);
+});
+
+test("a general adjective alone invents nothing, and negation covers it", () => {
+  const bare = parseOrderText("black headphones please");
+  assert.equal(bare.items[0].quantity, 1);
+  assert.equal(bare.total, 59);
+  const d = parseOrderText("no red mugs, just a candle");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "candle");
+  assert.equal(d.total, 13.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

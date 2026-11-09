@@ -41,7 +41,9 @@ can be said the way people say them — digits, number words up to ninety-nine
 and scale words (hundred, thousand),
 or dozens ("a dozen mugs" drafts twelve), and a quantity still counts
 when a catalog adjective sits between it and the item ("2 wireless
-headphones" drafts two, not one), or written after the item in
+headphones" drafts two, not one), or when a general descriptive
+adjective does ("2 black headphones" drafts two, "a dozen red
+candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
 shopping-list style ("mugs x3" drafts three). Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
@@ -75,7 +77,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 55 passing) cover the parser (including group
+- Tests (`npm test`, 58 passing) cover the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
   four — container words — "3 boxes of candles" drafts three and a
   negated container drafts none — number
@@ -86,7 +88,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   repeated mentions of the same item in one sentence, dozen
   quantities — "a dozen mugs" drafts twelve, "half-dozen" drafts
   six and "two-dozen" drafts twenty-four — quantities stated
-  before a catalog adjective, trailing counts after the item
+  before a catalog adjective and before a general descriptive
+  adjective ("2 black headphones" drafts two, "no red mugs" drafts
+  none), trailing counts after the item
   ("mugs x3"), word-boundary matching so
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and

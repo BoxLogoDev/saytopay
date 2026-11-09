@@ -25,15 +25,29 @@ function quantityValue(token) {
   return /^\d+$/.test(token) ? parseInt(token, 10) : NUMBER_WORDS[token] ?? 1;
 }
 
-// Descriptive words from the catalog's own item names (plus common size
-// words) that buyers naturally put between a quantity and the item:
-// "2 wireless headphones", "a dozen ceramic mugs", "2 steel water bottles".
-// They carry no quantity or product meaning of their own, so the quantity
-// lookup may skip over them — before this, every such sentence silently
-// drafted a quantity of 1.
+// Descriptive words that buyers naturally put between a quantity and
+// the item: the catalog's own item-name adjectives ("2 wireless
+// headphones", "a dozen ceramic mugs", "2 steel water bottles") and
+// general descriptive adjectives — colors, materials, and common
+// qualities ("2 black headphones", "3 red mugs", "a dozen red
+// candles", "2 leather backpacks"). They carry no quantity or product
+// meaning of their own, so the quantity lookup may skip over them —
+// before this, every sentence whose adjective was not one of the
+// catalog's own silently drafted a quantity of 1, and a negated one
+// ("no red mugs") was drafted at all because the adjective was not
+// recognised negation filler either. Because this set feeds both the
+// quantity lookup and NEGATION_FILLER below, one list keeps the two
+// readings in agreement.
 const FILLER_WORDS = new Set([
   "wireless", "steel", "ceramic", "paper", "paperback", "cotton",
   "mechanical", "canvas", "scented", "large", "small", "fresh",
+  "black", "white", "red", "blue", "green", "yellow", "orange",
+  "pink", "purple", "brown", "gray", "grey", "gold", "golden",
+  "silver", "leather", "wooden", "wood", "plastic", "glass",
+  "metal", "metallic", "denim", "linen", "rubber", "bamboo",
+  "new", "old", "big", "hot", "cold", "warm", "soft", "round",
+  "square", "reusable", "portable", "electric", "digital",
+  "handmade", "organic", "instant",
 ]);
 
 // Quantity may also be written after the item, shopping-list style:
