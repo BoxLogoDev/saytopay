@@ -174,6 +174,28 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
   create → approve → capture run and records its order and capture IDs.
 
+## Filming status (2026-11-10, 46th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),
+  parse ($45.50 for the filmed example), catalog (12 items), and UI
+  serving were re-verified live in this cycle, and `npm test` passes
+  70/70. The parser now also reads a postposed comma count that
+  closes the mention — "mugs, three of them" drafts three and
+  "mugs, 3" drafts three, while the count in "mugs, 3 candles"
+  still belongs to the candles — verified against the real sandbox
+  with an order created from "mugs, three of them" (order
+  758113591U5256639, $36.00, mug ×3, CREATED; status lookup returned
+  the same items and amount) and the filmed sentence re-created
+  (order 3D074120W79779345, CREATED, $45.50, status lookup CREATED
+  with no capture — items coffee-beans ×2 + notebook ×1 — and an
+  unapproved capture was refused by the real API with 422
+  `ORDER_NOT_APPROVED`) — creation only, not capture. The submission
+  images (cover + flow, 1600x900) are still in place in the
+  submission-assets folder. The owner is traveling in Ishigaki; the
+  approval step still needs the owner's PayPal Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-10, 45th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`),

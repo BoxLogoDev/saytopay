@@ -256,6 +256,40 @@ test("an equals sign without a count or with a longer number invents nothing", (
   assert.equal(standard.total, 45.5);
 });
 
+test("parses a postposed comma count with 'of them'", () => {
+  const word = parseOrderText("mugs, three of them");
+  assert.equal(word.items.length, 1);
+  assert.equal(word.items[0].sku, "mug");
+  assert.equal(word.items[0].quantity, 3);
+  assert.equal(word.total, 36);
+  const digit = parseOrderText("I need mugs, 3 of them please");
+  assert.equal(digit.items[0].quantity, 3);
+  assert.equal(digit.total, 36);
+  const second = parseOrderText("two mugs and candles, three of them");
+  assert.equal(second.items.find((i) => i.sku === "mug").quantity, 2);
+  assert.equal(second.items.find((i) => i.sku === "candle").quantity, 3);
+  assert.equal(second.total, 64.5);
+});
+
+test("parses a postposed comma count that closes the sentence", () => {
+  const digit = parseOrderText("mugs, 3");
+  assert.equal(digit.items[0].quantity, 3);
+  assert.equal(digit.total, 36);
+  const word = parseOrderText("candles, two");
+  assert.equal(word.items[0].quantity, 2);
+  assert.equal(word.total, 27);
+  const punct = parseOrderText("mugs, 3.");
+  assert.equal(punct.items[0].quantity, 3);
+});
+
+test("a comma count followed by another item still belongs to that item", () => {
+  const word = parseOrderText("mugs, three candles");
+  assert.equal(word.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(word.items.find((i) => i.sku === "candle").quantity, 3);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a bare number glued to a unit or a longer number invents nothing", () => {
   const unit = parseOrderText("coffee beans 500g");
   assert.equal(unit.items[0].quantity, 1);

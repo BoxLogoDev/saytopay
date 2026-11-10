@@ -86,6 +86,16 @@ const FILLER_WORDS = new Set([
 // after it ("a mug = it was great") invents nothing, and a longer
 // number ("mugs = 2026") invents nothing either, exactly like the
 // bare-number form.
+//
+// A count can also come after the item behind a comma, the way a
+// buyer corrects or confirms an amount out loud: "mugs, three of
+// them", "I need mugs, 3 of them please", "mugs, 3". Before this,
+// those counts were silently ignored too and every such sentence
+// drafted a quantity of 1. The comma form only counts when the
+// number closes the mention — followed by "of them/those/these",
+// "please", sentence punctuation, or the end of the sentence — so
+// the count in "mugs, 3 candles" still belongs to the candles,
+// exactly as the bare-number rule below already guarantees.
 function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
@@ -100,6 +110,8 @@ function detectTrailingQuantity(afterRaw) {
   if (dash) return quantityValue(dash[1] ?? dash[2]);
   const equals = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (equals) return quantityValue(equals[1] ?? equals[2]);
+  const comma = after.match(new RegExp(`^\\s*,\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
+  if (comma) return quantityValue(comma[1] ?? comma[2]);
   const bare = after.match(/^\s+(\d{1,3})(?![\dA-Za-z])(?!\.\d)/);
   if (bare) return parseInt(bare[1], 10);
   return null;
@@ -306,8 +318,12 @@ export function parseOrderText(text) {
     // ("one thousand and twenty-one …") still fits in front of its item.
     const before = input.slice(Math.max(0, hit.start - 48), hit.start);
     // A trailing "xN" count is written for this exact mention, so it
-    // takes precedence over any quantity word before the item.
-    const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 12));
+    // takes precedence over any quantity word before the item. The
+    // window is 24 chars so a full comma form ("…, three of them")
+    // still fits after its item; every trailing pattern is anchored
+    // to the start of the window, so a longer window matches nothing
+    // that does not immediately follow the item.
+    const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 24));
     let quantity = trailing != null ? trailing : detectQuantity(before);
     quantity = Math.min(Math.max(quantity, 1), 99);
     // A buyer may mention the same item more than once in one sentence
