@@ -1131,3 +1131,28 @@ PayPal AI Hackathon 2026 출품작 제작·QA 로그. 제출 마감 2026-11-13 0
 
 ### 다음 회차 제안
 - 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 기능 보강 카테고리(키트 범위 안의 작은 개선 1개)로 진행하되 데모·문안은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
+
+## 46회차 — 2026-11-10 15:34 KST · 카테고리: 기능 보강
+
+### 판단 근거
+- 직전 회차는 데모·문안(45회차)이었으므로 같은 카테고리를 반복하지 않았다. 45회차 제안대로, 주인님 재로그인 증거가 없어 승인→캡처 QA를 완료로 기록할 수 없는 상태에서 기능 보강 1단위를 수행했다. 최종 제출 단계(2026-11-12 18:00 이후)가 아니다. 주인님은 이시가키 여행 중이다(오늘 다이빙 1일차).
+
+### 한 일 — 품목 뒤에 쉼표로 붙는 후행 수량("…, three of them") 인식
+- 발견한 결함: 수량을 품목 뒤에 쉼표로 확인·정정하듯 말하면 전부 수량 1로 조용히 떨어졌다. 실측(수정 전): `mugs, three of them` → 머그 1개($12), `I need mugs, 3 of them please` → 1개, `mugs, 3` → 1개, `two mugs and candles, three of them` → 캔들 1개.
+- `src/parseOrder.js` — `detectTrailingQuantity()`에 쉼표형을 추가했다: 쉼표 뒤 수량이 언급을 닫을 때만(뒤에 `of them/those/these`·`please`·문장 부호·문장 끝) 그 품목의 수량으로 센다. 새 품목이 뒤에 오면(`mugs, 3 candles`의 3은 캔들 것) 종전 규칙대로 다음 품목의 수량으로 남는다. 후행 판정 창을 12자 → 24자로 넓혔다(모든 후행 패턴이 창 시작에 고정돼 있어, 품목 바로 뒤에 오지 않는 것은 여전히 매칭되지 않는다).
+- `test/parseOrder.test.js` — 테스트 3개 추가(of them형·문장을 닫는 쉼표형, 쉼표 수량이 다음 품목에 남는 경계) — 총 67개 → 70개.
+- `README.md`·`DEVPOST_COPY.md`·`DEMO_SCRIPT.md`·`FILMING_RUNBOOK.md`·`SUBMISSION_RUNBOOK.md` 정비: 쉼표형 동작 설명과 테스트 수 70개를 실측값으로 갱신, DEMO_SCRIPT 촬영 가능 상태에 46회차 블록 추가, SUBMISSION_RUNBOOK Gate 0 최신 생성 주문을 이번 회차 주문으로 교체. 데모 예시 문장과 $45.50 총액은 변하지 않았다.
+- 작은 단위라 Muse Code 위임 대신 직접 수행했다(종전 회차와 같은 사유).
+
+### 감독 검증 (직접 실행)
+- `npm test` 70/70 통과. 수정 전후 대조: 위 문장들이 각각 머그 3개($36)·머그 3개($36)·머그 3개($36)·머그 2개+캔들 3개($64.50)로 바뀌고, `mugs, 3 candles`·`mugs, three candles`는 머그 1개·캔들 3개 그대로, `no mugs, 3 candles`는 캔들만 3개, 표준 예시 `2 coffee beans and a notebook`은 $45.50, 반복 합산(`a mug and three mugs` → 4개)·기존 후행 표기(`mugs x3`·`mugs - three of them`)도 그대로임을 확인. 참고로 괄호 안 복합 수사(`mugs (twenty-one)`)는 이번 변경 전에도 안 되던 별개 공백이라 이번 단위 범위 밖으로 뒀다.
+- 실제 서버 기동 스모크: `/api/health` 정상(sandbox, credentialsConfigured=true), `/api/parse` 신규 문장 머그 3개 $36·표준 예시 $45.50, `/api/catalog` 12개 품목, UI 서빙(제목) 정상. 검증용 서버는 종료(포트 닫힘)까지 확인했다.
+- **신규 동작을 실샌드박스로 검증**: 문장(`mugs, three of them`)만으로 `POST /api/orders` → 실제 샌드박스 주문 생성 성공(주문 758113591U5256639, CREATED), `GET /api/orders/:id` 조회로 PayPal 응답의 금액 $36.00·수량 3·SKU mug가 일치함을 확인했다. 표준 문장 주문도 재생성했다(주문 3D074120W79779345, CREATED, $45.50, 상태 조회 CREATED·captureId=null) — 미승인 캡처는 실제 API가 422 `ORDER_NOT_APPROVED`로 거부(앱은 502 upstream_error로 매핑). 승인·캡처를 한 것으로 기록하지 않는다.
+- 빈칸 전수 검사: DEVPOST_COPY에 남은 플레이스홀더는 [SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]·[VIDEO_URL]뿐이며 모두 Gate 0·영상 제작에 묶인 미검증 항목이라 그대로 뒀다. 공개 자료 개인정보·회사 표현 스캔: `.env`·DEVLOG 제외 전체에서 실명·연락처·소속·회사(LS) 표현 0건. 현행 문서의 낡은 테스트 수("67 passing" 등) 잔존 0건(DEMO_SCRIPT의 날짜 박힌 과거 회차 이력 블록은 당시 기록이라 그대로 둠). 제출 이미지 2장(1600x900)은 submission-assets 보관 위치에 그대로 있음을 확인했다.
+- **공개 저장소 동기화 성공**: 스냅샷 푸시 완료 — 커밋 2aaa4fb085495f3a3fd2d34469e50b2cb83d9d47(파일 25개, 370,750바이트). GitHub 읽기 도구(list_commits)로 원격 HEAD가 이 커밋으로 이동했음을 직접 확인했다. 단, 이 46회차 로그 항목과 그 직후의 SUBMISSION_RUNBOOK Step 1 HEAD 갱신은 푸시 이후에 쓴 것이라 로컬에만 있으며 다음 푸시에 함께 올라간다. (푸시 1차 시도는 서비스 재시작으로 중단됐으나 원격 HEAD가 45회차 커밋에 머물러 있음을 확인한 뒤 재시도해 성공했다 — 중복 커밋 없음.)
+
+### 완료로 기록하지 않는 것 (막힌 지점 — 변동 없음, 1건)
+1. **구매자 승인 → 캡처 미검증** — 주인님이 브라우저에서 PayPal Developer에 다시 로그인해 주시면 다음 QA 회차가 Sandbox Accounts 구매자 비밀번호 확인(값은 기록하지 않음) → 승인 → 캡처·capture ID 확보 → DEVPOST_COPY 빈칸([SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]) 실측값 기입까지 수행한다. 대안으로 승인 화면에서 주인님이 직접 승인만 해 주셔도 캡처는 API로 마칠 수 있다. 제출 마감 2026-11-13 05:00 KST가 이시가키 귀국(11/13 16:10)보다 먼저이므로, 승인 1건은 11/12 18:00 최종 제출 단계 전까지 풀려야 한다.
+
+### 다음 회차 제안
+- 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이다. 재로그인이 없으면 데모·문안 카테고리로 진행하되 기능 보강은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.

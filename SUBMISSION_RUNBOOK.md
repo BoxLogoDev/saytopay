@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 46th cycle (2026-11-10) creation
-is verified again (order 3D074120W79779345, CREATED, $45.50; status
+alone does not clear this gate. As of the 47th cycle (2026-11-10) creation
+is verified again (order 5M032300AP315353K, CREATED, $45.50; status
 lookup returned CREATED with no capture — items coffee-beans ×2 +
 notebook ×1 — and an
 unapproved capture was refused by the real API with 422
@@ -27,11 +27,12 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the 45th-cycle commit
-  1b0c84efec0b603ed442a986ec8efcaf90fe30d7 (verified with the GitHub
-  read tool `list_commits` in the 45th cycle; code and docs through
-  the 45th cycle are reflected; the 45th-cycle DEVLOG entry and this
-  Step 1 update are local until the next push).
+- Remote HEAD is the 46th-cycle commit
+  2aaa4fb085495f3a3fd2d34469e50b2cb83d9d47 (verified with the GitHub
+  read tool `list_commits` in the 46th cycle and re-confirmed in the
+  47th cycle; code and docs through
+  the 46th cycle are reflected; the 46th-cycle DEVLOG entry and the
+  47th-cycle edits are local until the next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
   70-test suite.
@@ -42,7 +43,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 46th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 47th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
