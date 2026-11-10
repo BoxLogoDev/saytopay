@@ -141,6 +141,46 @@ test("parses a trailing x-count after the item", () => {
   assert.equal(spaced.total, 118);
 });
 
+test("parses a trailing number-times count after the item", () => {
+  const d = parseOrderText("mugs 3x");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const twoDigit = parseOrderText("mugs 12x");
+  assert.equal(twoDigit.items[0].quantity, 12);
+  assert.equal(twoDigit.total, 144);
+  const list = parseOrderText("candles 2x and a mug");
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 1);
+});
+
+test("parses a trailing number-times count in delimiter forms", () => {
+  const colon = parseOrderText("mugs: 3x");
+  assert.equal(colon.items[0].quantity, 3);
+  const paren = parseOrderText("mugs (3x)");
+  assert.equal(paren.items[0].quantity, 3);
+  const bracket = parseOrderText("mugs [3x]");
+  assert.equal(bracket.items[0].quantity, 3);
+  const dash = parseOrderText("mugs - 3x");
+  assert.equal(dash.items[0].quantity, 3);
+  const equals = parseOrderText("mugs = 3x");
+  assert.equal(equals.items[0].quantity, 3);
+  const comma = parseOrderText("mugs, 3x");
+  assert.equal(comma.items[0].quantity, 3);
+});
+
+test("a trailing number-times count invents nothing for a longer number or a glued unit", () => {
+  const year = parseOrderText("mugs 2026x");
+  assert.equal(year.items[0].quantity, 1);
+  const glued = parseOrderText("mugs 3xg");
+  assert.equal(glued.items[0].quantity, 1);
+  const unit = parseOrderText("coffee beans 500g");
+  assert.equal(unit.items[0].quantity, 1);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("trailing x-count applies to its own item only", () => {
   const d = parseOrderText("coffee beans x2 and a notebook");
   assert.equal(d.items.find((i) => i.sku === "coffee-beans").quantity, 2);
@@ -748,6 +788,109 @@ test("trailing pair counts are read, and the standard example is unchanged", () 
   const nextItem = parseOrderText("mugs, two dozen candles");
   assert.equal(nextItem.items.find((i) => i.sku === "mug").quantity, 1);
   assert.equal(nextItem.items.find((i) => i.sku === "candle").quantity, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("trailing scale counts are read in delimiter forms (clamped to 99)", () => {
+  const colon = parseOrderText("mugs: a hundred");
+  assert.equal(colon.items[0].quantity, 99);
+  assert.equal(colon.total, 1188);
+  const counted = parseOrderText("candles: two hundred");
+  assert.equal(counted.items[0].quantity, 99);
+  assert.equal(counted.total, 1336.5);
+  const paren = parseOrderText("mugs (a thousand)");
+  assert.equal(paren.items[0].quantity, 99);
+  const bracket = parseOrderText("notebooks [two hundred]");
+  assert.equal(bracket.items[0].quantity, 99);
+  const dash = parseOrderText("notebooks - a thousand");
+  assert.equal(dash.items[0].quantity, 99);
+  const equals = parseOrderText("mugs = a hundred");
+  assert.equal(equals.items[0].quantity, 99);
+  const list = parseOrderText("mugs: a hundred, candles: 2");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 99);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.total, 1188 + 27);
+});
+
+test("trailing scale counts read an 'and' remainder, a dozen, and the comma form", () => {
+  const remainder = parseOrderText("candles: a hundred and five");
+  assert.equal(remainder.items[0].quantity, 99);
+  const compoundRemainder = parseOrderText("mugs: a hundred and twenty-one");
+  assert.equal(compoundRemainder.items[0].quantity, 99);
+  const scaledDozen = parseOrderText("candles: a hundred dozen");
+  assert.equal(scaledDozen.items[0].quantity, 99);
+  const comma = parseOrderText("mugs, a hundred of them");
+  assert.equal(comma.items[0].quantity, 99);
+  assert.equal(comma.total, 1188);
+  const bare = parseOrderText("mugs: hundred");
+  assert.equal(bare.items[0].quantity, 99);
+});
+
+test("trailing scale counts do not leak, and the standard example is unchanged", () => {
+  const nextItem = parseOrderText("mugs, a hundred candles");
+  assert.equal(nextItem.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(nextItem.items.find((i) => i.sku === "candle").quantity, 99);
+  const front = parseOrderText("a hundred notebooks");
+  assert.equal(front.items[0].quantity, 99);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+  assert.equal(standard.items.find((i) => i.sku === "coffee-beans").quantity, 2);
+  assert.equal(standard.items.find((i) => i.sku === "notebook").quantity, 1);
+});
+
+test("a decimal in front of the item never supplies a count", () => {
+  assert.equal(parseOrderText("1.5 mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("2.5 mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("0.5 mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("1.25 mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("10.5 mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("1.5 mugs").total, 12);
+  const second = parseOrderText("a mug and 1.5 candles");
+  assert.equal(second.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(second.items.find((i) => i.sku === "candle").quantity, 1);
+  assert.equal(second.total, 25.5);
+});
+
+test("a decimal before dozen or a scale word drafts one, not the scaled count", () => {
+  assert.equal(parseOrderText("1.5 dozen mugs").items[0].quantity, 1);
+  assert.equal(parseOrderText("1.5 dozen mugs").total, 12);
+  assert.equal(parseOrderText("2.5 hundred candles").items[0].quantity, 1);
+  assert.equal(parseOrderText("version 1.5 mugs").items[0].quantity, 1);
+});
+
+test("trailing decimals invent nothing, and integer counts are unchanged", () => {
+  assert.equal(parseOrderText("mugs: 2.5").items[0].quantity, 1);
+  assert.equal(parseOrderText("mugs (1.5)").items[0].quantity, 1);
+  assert.equal(parseOrderText("mugs x1.5").items[0].quantity, 1);
+  assert.equal(parseOrderText("mugs: 2").items[0].quantity, 2);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("the irregular plural 'mice' matches the mouse, with its quantity", () => {
+  const two = parseOrderText("two mice");
+  assert.equal(two.items.length, 1);
+  assert.equal(two.items[0].sku, "mouse");
+  assert.equal(two.items[0].quantity, 2);
+  assert.equal(two.total, 68);
+  const mixed = parseOrderText("2 mice and a keyboard");
+  assert.equal(mixed.items.find((i) => i.sku === "mouse").quantity, 2);
+  assert.equal(mixed.items.find((i) => i.sku === "keyboard").quantity, 1);
+  assert.equal(mixed.total, 147);
+});
+
+test("'mice' merges with a 'mouse' mention of the same item", () => {
+  const merged = parseOrderText("a mouse and two mice");
+  assert.equal(merged.items.length, 1);
+  assert.equal(merged.items[0].sku, "mouse");
+  assert.equal(merged.items[0].quantity, 3);
+  assert.equal(merged.total, 102);
+  assert.equal(parseOrderText("twenty-one mice").items[0].quantity, 21);
+});
+
+test("'mice' inside another word invents nothing, and the standard example is unchanged", () => {
+  assert.deepEqual(parseOrderText("micellar water and a promise").items, []);
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });

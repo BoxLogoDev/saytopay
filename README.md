@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (94 tests) covers the AI language step (provider
+The test suite (106 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -81,7 +81,9 @@ headphones" is two headphones, "a dozen red candles" is twelve
 candles, "a pair of black headphones" is two, and "no red mugs"
 drafts no mugs — trailing counts written after
 the item: "mugs x3" is three mugs and "coffee beans x2" is two, applied
-to that item only — and list-style counts after the item: "mugs: 3",
+to that item only — and the same multiplier written after its number:
+"mugs 3x" and "mugs: 3x" are three mugs, while a longer number or a
+glued unit ("mugs 2026x", "mugs 3xg") invents nothing — and list-style counts after the item: "mugs: 3",
 "candles: two", and "mugs (3)" draft those quantities for that item,
 while a colon with no count after it invents nothing — and the other
 list shorthands after the item: "mugs 3", "mugs - 3", "mugs [3]",
@@ -96,9 +98,16 @@ twenty, and "mugs (forty two)" drafts forty-two, not one — and dozen
 and pair counts in every trailing form: "candles: a dozen" drafts
 twelve, "candles: two dozen" drafts twenty-four, "mugs (half a
 dozen)" drafts six, "mugs, a dozen of them" drafts twelve, and
-"headphones: a pair" drafts two — word-boundary matching:
+"headphones: a pair" drafts two — and scale counts in every trailing
+form: "mugs: a hundred" drafts ninety-nine (one hundred, clamped to
+the per-item maximum), "candles: two hundred" drafts ninety-nine,
+"mugs, a hundred of them" drafts ninety-nine, and "candles: a hundred
+and five" drafts ninety-nine — decimal amounts, which never supply a
+count (the catalog sells whole units): "1.5 mugs" drafts one mug, not
+five, "1.25 mugs" drafts one, not twenty-five, and "1.5 dozen mugs"
+drafts one, not sixty — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
-while plurals like "mugs" and "notebooks" still match — and explicit
+while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
 leaking onto the next item — and an "of the" connector between the

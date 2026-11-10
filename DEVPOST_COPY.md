@@ -53,7 +53,9 @@ when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or when a general descriptive
 adjective does ("2 black headphones" drafts two, "a dozen red
 candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
-shopping-list style ("mugs x3" and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one). Keywords match on word boundaries,
+shopping-list style ("mugs x3", "mugs 3x", and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one), and a scale phrase counts in every trailing form ("mugs: a hundred" drafts ninety-nine — one hundred, clamped — not one, and "candles: two hundred" drafts ninety-nine, not two). A decimal amount never supplies a count
+either — "1.5 mugs" drafts one, not five, and "1.5 dozen mugs" drafts
+one, not sixty. Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
 ("mugs", "notebooks") still match. An item the buyer explicitly rules
@@ -90,7 +92,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 94 passing) cover the AI step (provider
+- Tests (`npm test`, 106 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -111,7 +113,8 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   before a catalog adjective and before a general descriptive
   adjective ("2 black headphones" drafts two, "no red mugs" drafts
   none), trailing counts after the item
-  ("mugs x3", list-style "mugs: 3" and "mugs (3)", and the bare, dash,
+  ("mugs x3", list-style "mugs: 3" and "mugs (3)", the number-times
+  forms "mugs 3x" and "mugs: 3x", and the bare, dash,
   bracket, and equals shorthands "mugs 3", "mugs - 3", "mugs [3]", and
   "mugs = 3", while a longer number after any of them invents
   nothing, and a postposed comma count that closes the mention —
@@ -121,8 +124,13 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   twenty-one, not twenty, and "mugs (forty two)" drafts forty-two,
   not one — and dozen and pair counts in every trailing form —
   "candles: a dozen" drafts twelve, "candles: two dozen" drafts
-  twenty-four, and "headphones: a pair" drafts two), word-boundary matching so
-  "booking" never drafts a book while plurals still match,
+  twenty-four, and "headphones: a pair" drafts two — and scale counts
+  in every trailing form — "mugs: a hundred" and "candles: two
+  hundred" draft ninety-nine (the scaled quantity, clamped), and
+  "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
+  never supply a count ("1.5 mugs" drafts one, not five, and
+  "1.5 dozen mugs" drafts one, not sixty), word-boundary matching so
+  "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse),
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
   drafts two, and quantities before "more" so "two more mugs"

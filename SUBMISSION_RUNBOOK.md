@@ -11,13 +11,13 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 54th cycle (2026-11-10) creation
-is verified again (order 21T11910PT994803L, CREATED, $324.00, candle
-×24 from "2 boxes of 12 candles"; status
+alone does not clear this gate. As of the 62nd cycle (2026-11-11) creation
+is verified again (order 9CP83183YB135401M, CREATED, $45.50,
+coffee-beans ×2 + notebook ×1 from the filmed sentence
+"2 coffee beans and a notebook"; status
 lookup returned CREATED with no capture and an
 unapproved capture was refused by the real API with 422
-`ORDER_NOT_APPROVED`; the filmed sentence was also re-created as
-order 7GB081042M823615D, CREATED, $45.50) but approval
+`ORDER_NOT_APPROVED`) but approval
 → capture is still unverified: it needs the owner signed in to PayPal
 Developer in the browser so the sandbox buyer account password can be
 read from Sandbox Accounts (the value is never recorded), or the owner
@@ -28,14 +28,16 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the 53rd-cycle commit
-  56746d28a1b86189295988c5d3a0098240e56b21 (push completed in the 53rd
+- Remote HEAD is the 54th-cycle commit
+  236876a8b3c17ae55c9b073573c5faf102d1f14e (push completed in the 54th
   cycle and re-read with the GitHub read tool; code and docs through
-  the 53rd-cycle edits are reflected; the 53rd-cycle DEVLOG entry and
-  the 54th-cycle edits are local until the next push).
+  the 54th-cycle edits are reflected; the 54th-cycle DEVLOG entry and
+  the 55th- through 62nd-cycle edits are local until the next push —
+  the 58th cycle has no DEVLOG entry of its own; see the supplement
+  note recorded in the 59th cycle).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  94-test suite.
+  106-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -43,7 +45,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 54th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 62nd cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

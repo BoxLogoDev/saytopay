@@ -72,7 +72,10 @@ const FILLER_WORDS = new Set([
 // "mugs x3", "coffee beans x2", "headphones x 2". Before this, the
 // trailing count was silently ignored and every such sentence drafted
 // a quantity of 1. Only a digit count after x/× counts — a bare "x"
-// with no number invents nothing.
+// with no number invents nothing. The multiplier can also follow its
+// number — "mugs 3x", "mugs: 3x", "mugs (3x)" — the mirror of the
+// front-of-item "3x mugs" form; before that was read, every such
+// entry drafted a quantity of 1 as well.
 //
 // The same list style also writes the count after a colon or in
 // parentheses: "mugs: 3", "candles: two", "mugs (3)", "notebooks
@@ -126,6 +129,16 @@ const FILLER_WORDS = new Set([
 // drafted one, "candles: two dozen" drafted two (only the count
 // word was read), "headphones: a pair" drafted one. The x form
 // stays digit-only, exactly as documented above.
+//
+// The scale phrases the front-of-item lookup understands also count
+// when they are written after the item, in every delimiter form
+// above: "mugs: a hundred", "candles: two hundred", "mugs (a
+// thousand)", "mugs, a hundred of them", "candles: a hundred and
+// five", "candles: a hundred dozen". Before this, those counts were
+// misread or dropped — "mugs: a hundred" drafted one (only the
+// article was read) and "candles: two hundred" drafted two (only
+// the count word was read). Scaled quantities above ninety-nine are
+// clamped by the caller, exactly like the front-of-item scale forms.
 const GROUP_PHRASE = `(?:half[-\\s]+(?:a[-\\s]+)?dozen|(?:a[-\\s]+)?couple[-\\s]+of[-\\s]+dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+dozen|dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+(?:pairs?|couples?)|pairs?|couples?)`;
 
 function groupPhraseValue(phrase) {
@@ -143,10 +156,52 @@ function groupPhraseValue(phrase) {
   return null;
 }
 
+const SCALE_COUNT = `(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3}(?!\\d))`;
+const SCALE_PHRASE = `(?:${SCALE_COUNT}\\s+)?(?:hundred|thousand)(?:\\s+dozen|\\s+and\\s+${SCALE_COUNT})?`;
+
+function scalePhraseValue(phrase) {
+  const p = String(phrase || "").replace(/-/g, " ").trim();
+  const dozen = /\sdozen$/.test(p);
+  const core = dozen ? p.replace(/\sdozen$/, "") : p;
+  const m = core.match(/^(?:(.+?)\s+)?(hundred|thousand)(?:\s+and\s+(.+))?$/);
+  if (!m) return null;
+  const count = m[1] ? countPhraseValue(m[1]) : 1;
+  const base = count * (m[2] === "thousand" ? 1000 : 100);
+  if (dozen) return base * 12;
+  return base + (m[3] ? countPhraseValue(m[3]) : 0);
+}
+
 function detectTrailingQuantity(afterRaw) {
-  const after = String(afterRaw || "");
+  // A decimal number never supplies a trailing count either:
+  // "mugs: 2.5" read the integer part (2) and "mugs x1.5" the digit
+  // after the x. Neutralising decimals in this copy makes every
+  // trailing pattern below see no count, exactly like the front
+  // lookup in detectQuantity.
+  const after = String(afterRaw || "").replace(/\d+\.\d+/g, " decimal ");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
+  // The multiplier can also be written after its number: "mugs 3x",
+  // "mugs: 3x", "mugs (3x)". Before this, every such form drafted
+  // one — the digit patterns below need a word boundary after the
+  // number, which the attached "x" denies, and the bare-number form
+  // refuses a number followed by a letter. This is the mirror of
+  // the front-of-item "3x mugs" form. A longer number ("mugs
+  // 2026x") or a unit glued after the x ("mugs 3xg") invents
+  // nothing, exactly like the other trailing forms.
+  const nxBare = after.match(/^\s+(\d{1,3})(?!\d)x(?![a-z])/);
+  if (nxBare) return parseInt(nxBare[1], 10);
+  const nxColon = after.match(/^\s*:\s*(\d{1,3})(?!\d)x(?![a-z])/);
+  if (nxColon) return parseInt(nxColon[1], 10);
+  const nxParen = after.match(/^\s*\(\s*(\d{1,3})(?!\d)x\s*\)/);
+  if (nxParen) return parseInt(nxParen[1], 10);
+  const nxBracket = after.match(/^\s*\[\s*(\d{1,3})(?!\d)x\s*\]/);
+  if (nxBracket) return parseInt(nxBracket[1], 10);
+  const nxDash = after.match(/^\s*[-\u2013\u2014]\s*(\d{1,3})(?!\d)x(?![a-z])/);
+  if (nxDash) return parseInt(nxDash[1], 10);
+  const nxEquals = after.match(/^\s*=\s*(\d{1,3})(?!\d)x(?![a-z])/);
+  if (nxEquals) return parseInt(nxEquals[1], 10);
+  const nxComma = after.match(/^\s*,\s*(\d{1,3})(?!\d)x(?![a-z])(?:\s+of\s+(?:them|those|these)\b|\s+please\b|\s*[.!?;]|\s*$)/);
+  if (nxComma) return parseInt(nxComma[1], 10);
   // Compound number words ("twenty-one", "forty two") come first:
   // the single-word patterns below would read only the tens word
   // where they can match at all. The x form stays digit-only, as
@@ -163,6 +218,22 @@ function detectTrailingQuantity(afterRaw) {
   if (equalsCompound) return compoundValue(equalsCompound[1], equalsCompound[2]);
   const commaCompound = after.match(new RegExp(`^\\s*,\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaCompound) return compoundValue(commaCompound[1], commaCompound[2]);
+  // Scale phrases come before the single-word patterns below for
+  // the same reason: those would read only the count word
+  // ("candles: two hundred" drafted two) or just the article
+  // ("mugs: a hundred" drafted one).
+  const colonScale = after.match(new RegExp(`^\\s*:\\s*(${SCALE_PHRASE})\\b`));
+  if (colonScale) return scalePhraseValue(colonScale[1]);
+  const parenScale = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\s*\\)`));
+  if (parenScale) return scalePhraseValue(parenScale[1]);
+  const bracketScale = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\s*\\]`));
+  if (bracketScale) return scalePhraseValue(bracketScale[1]);
+  const dashScale = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${SCALE_PHRASE})\\b`));
+  if (dashScale) return scalePhraseValue(dashScale[1]);
+  const equalsScale = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\b`));
+  if (equalsScale) return scalePhraseValue(equalsScale[1]);
+  const commaScale = after.match(new RegExp(`^\\s*,\\s*(${SCALE_PHRASE})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
+  if (commaScale) return scalePhraseValue(commaScale[1]);
   // Dozen and pair phrases come before the single-word patterns
   // below: those would read only the count word ("candles: two
   // dozen" drafted two) or just the article ("candles: a dozen"
@@ -264,6 +335,25 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // Only the quantity look-back copy is normalised — keyword matching
   // on the original text is untouched.
   let before = stripFillerWords(String(beforeRaw || "").replace(/-/g, " "));
+  // A decimal number never supplies a count. The catalog sells whole
+  // units, so a fractional amount ("1.5 mugs") cannot be ordered —
+  // but before this, the digit patterns below read only the digits
+  // after the point: "1.5 mugs" drafted five mugs ($60), "1.25 mugs"
+  // drafted twenty-five ($300), and "1.5 dozen mugs" drafted sixty
+  // ($720, the fractional digit times twelve). Neutralising every
+  // decimal in this look-back copy makes the integer rules see no
+  // count in it, so the mention falls back to a single unit, exactly
+  // like a longer number ("mugs 2026") or a bare "more". The dozen
+  // and scale rules can match with an empty count, so a decimal
+  // directly in front of one of those words is refused outright
+  // instead of silently becoming a full dozen or hundred.
+  before = before.replace(/\d+\.\d+/g, " decimal ");
+  if (
+    /(?:^|\s)decimal\s+dozen\b/.test(before) ||
+    /(?:^|\s)decimal\s+(?:hundred|thousand)\b/.test(before)
+  ) {
+    return 1;
+  }
   // Container with an inner count first: "2 boxes of 12 candles" is
   // the product of the two counts, which no rule below can recover
   // once it has read only the inner one.

@@ -17,7 +17,11 @@ export const CATALOG = [
   { sku: "notebook", name: "Paper notebook", price: 9.5, keywords: ["notebook", "journal"] },
   { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "shirt"] },
   { sku: "keyboard", name: "Mechanical keyboard", price: 79.0, keywords: ["keyboard"] },
-  { sku: "mouse", name: "Wireless mouse", price: 34.0, keywords: ["mouse"] },
+  // "mice" is the irregular plural of the computer mouse: buyers who
+  // say "two mice" mean two of this item, but the regular plural rule
+  // (keyword + s/es) can never reach it, so before this keyword every
+  // such sentence silently dropped the mouse from the draft.
+  { sku: "mouse", name: "Wireless mouse", price: 34.0, keywords: ["mouse", "mice"] },
   { sku: "backpack", name: "Canvas backpack", price: 64.0, keywords: ["backpack", "rucksack"] },
   { sku: "bottle", name: "Steel water bottle", price: 21.0, keywords: ["water bottle", "bottle"] },
   { sku: "plant", name: "Desk plant", price: 15.0, keywords: ["plant", "succulent"] },
