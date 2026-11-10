@@ -188,6 +188,49 @@ test("a colon or parenthesis without a count invents nothing, and a comma count 
   assert.equal(standard.total, 45.5);
 });
 
+test("parses a trailing bare-number count after the item", () => {
+  const d = parseOrderText("mugs 3");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const list = parseOrderText("mugs 3, candles 2");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.total, 63);
+  const next = parseOrderText("mugs 3 and candles");
+  assert.equal(next.items.find((i) => i.sku === "candle").quantity, 1);
+});
+
+test("parses trailing dash and bracket counts after the item", () => {
+  const dash = parseOrderText("mugs - 3");
+  assert.equal(dash.items[0].quantity, 3);
+  assert.equal(dash.total, 36);
+  const dashWord = parseOrderText("candles - two");
+  assert.equal(dashWord.items[0].quantity, 2);
+  assert.equal(dashWord.total, 27);
+  const bracket = parseOrderText("mugs [3]");
+  assert.equal(bracket.items[0].quantity, 3);
+  const bracketWord = parseOrderText("notebooks [two]");
+  assert.equal(bracketWord.items[0].quantity, 2);
+  assert.equal(bracketWord.total, 19);
+  const bracketX = parseOrderText("mugs [x3]");
+  assert.equal(bracketX.items[0].quantity, 3);
+});
+
+test("a bare number glued to a unit or a longer number invents nothing", () => {
+  const unit = parseOrderText("coffee beans 500g");
+  assert.equal(unit.items[0].quantity, 1);
+  assert.equal(unit.total, 18);
+  const year = parseOrderText("mugs 2026");
+  assert.equal(year.items[0].quantity, 1);
+  const comma = parseOrderText("mugs, 3 candles");
+  assert.equal(comma.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(comma.items.find((i) => i.sku === "candle").quantity, 3);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("trailing mentions are summed and a bare x invents nothing", () => {
   const d = parseOrderText("mugs x2 and mugs x3");
   assert.equal(d.items.length, 1);

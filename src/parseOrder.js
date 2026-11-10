@@ -63,6 +63,15 @@ const FILLER_WORDS = new Set([
 // binds the count to the item right before it, so it cannot be
 // confused with a quantity written for the next item. A colon with
 // no count after it ("a mug: it was great") invents nothing.
+//
+// List shorthand also writes the count as a bare number, after a
+// dash, or in brackets: "mugs 3", "mugs - 3", "candles - two",
+// "mugs [3]", "notebooks [two]". Before this, all of those drafted
+// a quantity of 1 as well. The bare-number form counts digits only
+// and only when the number stands alone — a number glued to a unit
+// ("coffee beans 500g") or a longer number ("mugs 2026") invents
+// nothing, and a comma still separates items, so the count in
+// "mugs, 3 candles" still belongs to the candles.
 function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
@@ -71,6 +80,12 @@ function detectTrailingQuantity(afterRaw) {
   if (colon) return quantityValue(colon[1] ?? colon[2]);
   const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\s*\\)`));
   if (paren) return quantityValue(paren[1] ?? paren[2]);
+  const bracket = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\s*\\]`));
+  if (bracket) return quantityValue(bracket[1] ?? bracket[2]);
+  const dash = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\b`));
+  if (dash) return quantityValue(dash[1] ?? dash[2]);
+  const bare = after.match(/^\s+(\d{1,3})(?![\dA-Za-z])(?!\.\d)/);
+  if (bare) return parseInt(bare[1], 10);
   return null;
 }
 

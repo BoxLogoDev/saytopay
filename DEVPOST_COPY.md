@@ -77,7 +77,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 61 passing) cover the parser (including group
+- Tests (`npm test`, 64 passing) cover the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
   four — container words — "3 boxes of candles" drafts three and a
   negated container drafts none — number
@@ -91,7 +91,8 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   before a catalog adjective and before a general descriptive
   adjective ("2 black headphones" drafts two, "no red mugs" drafts
   none), trailing counts after the item
-  ("mugs x3", list-style "mugs: 3" and "mugs (3)"), word-boundary matching so
+  ("mugs x3", list-style "mugs: 3" and "mugs (3)", and the bare, dash,
+  and bracket shorthands "mugs 3", "mugs - 3", and "mugs [3]"), word-boundary matching so
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
