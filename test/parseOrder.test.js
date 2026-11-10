@@ -665,3 +665,53 @@ test("a general adjective alone invents nothing, and negation covers it", () => 
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("trailing dozen counts are read in delimiter forms", () => {
+  const colon = parseOrderText("candles: a dozen");
+  assert.equal(colon.items[0].quantity, 12);
+  assert.equal(colon.total, 162);
+  const counted = parseOrderText("candles: two dozen");
+  assert.equal(counted.items[0].quantity, 24);
+  assert.equal(counted.total, 324);
+  const paren = parseOrderText("candles (a dozen)");
+  assert.equal(paren.items[0].quantity, 12);
+  const bracket = parseOrderText("mugs [a dozen]");
+  assert.equal(bracket.items[0].quantity, 12);
+  assert.equal(bracket.total, 144);
+  const equals = parseOrderText("candles = a dozen");
+  assert.equal(equals.items[0].quantity, 12);
+  const list = parseOrderText("candles: a dozen, mugs: 2");
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 12);
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 2);
+  assert.equal(list.total, 162 + 24);
+});
+
+test("trailing half-dozen and comma dozen counts are read", () => {
+  const half = parseOrderText("mugs: half a dozen");
+  assert.equal(half.items[0].quantity, 6);
+  assert.equal(half.total, 72);
+  const parenHalf = parseOrderText("mugs (half-dozen)");
+  assert.equal(parenHalf.items[0].quantity, 6);
+  const comma = parseOrderText("mugs, a dozen of them");
+  assert.equal(comma.items[0].quantity, 12);
+  assert.equal(comma.total, 144);
+  const coupleDozen = parseOrderText("mugs: a couple of dozen");
+  assert.equal(coupleDozen.items[0].quantity, 24);
+  assert.equal(coupleDozen.total, 288);
+});
+
+test("trailing pair counts are read, and the standard example is unchanged", () => {
+  const pair = parseOrderText("headphones: a pair");
+  assert.equal(pair.items[0].quantity, 2);
+  assert.equal(pair.total, 118);
+  const counted = parseOrderText("headphones (two pairs)");
+  assert.equal(counted.items[0].quantity, 4);
+  assert.equal(counted.total, 236);
+  const commaPair = parseOrderText("headphones, a pair of them");
+  assert.equal(commaPair.items[0].quantity, 2);
+  const nextItem = parseOrderText("mugs, two dozen candles");
+  assert.equal(nextItem.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(nextItem.items.find((i) => i.sku === "candle").quantity, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

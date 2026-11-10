@@ -116,6 +116,33 @@ const FILLER_WORDS = new Set([
 // or paren followed, as nothing at all ("mugs (twenty-one)"
 // drafted one). The one gap noted in the 46th cycle — the
 // parenthesised compound — is part of this same fix.
+//
+// The dozen and pair forms the front-of-item lookup has always
+// understood also count when they are written after the item, in
+// every delimiter form above: "candles: a dozen", "candles: two
+// dozen", "mugs (half a dozen)", "mugs, a dozen of them",
+// "headphones: a pair", "headphones (two pairs)". Before this,
+// those counts were misread or dropped — "candles: a dozen"
+// drafted one, "candles: two dozen" drafted two (only the count
+// word was read), "headphones: a pair" drafted one. The x form
+// stays digit-only, exactly as documented above.
+const GROUP_PHRASE = `(?:half[-\\s]+(?:a[-\\s]+)?dozen|(?:a[-\\s]+)?couple[-\\s]+of[-\\s]+dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+dozen|dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+(?:pairs?|couples?)|pairs?|couples?)`;
+
+function groupPhraseValue(phrase) {
+  const p = String(phrase || "").replace(/-/g, " ").trim();
+  if (/^half\s+(?:a\s+)?dozen$/.test(p)) return 6;
+  if (/^(?:a\s+)?couple\s+of\s+dozen$/.test(p)) return 24;
+  let m = p.match(new RegExp(`^(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s+dozen$`));
+  if (m) return compoundValue(m[1], m[2]) * 12;
+  m = p.match(/^(?:(\d{1,3})(?!\d)|([a-z]+))?\s*dozen$/);
+  if (m) return quantityValue(m[1] ?? m[2]) * 12;
+  m = p.match(new RegExp(`^(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s+(?:pairs?|couples?)$`));
+  if (m) return compoundValue(m[1], m[2]) * 2;
+  m = p.match(/^(?:(\d{1,3})(?!\d)|([a-z]+))?\s*(?:pairs?|couples?)$/);
+  if (m) return quantityValue(m[1] ?? m[2]) * 2;
+  return null;
+}
+
 function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
@@ -136,6 +163,22 @@ function detectTrailingQuantity(afterRaw) {
   if (equalsCompound) return compoundValue(equalsCompound[1], equalsCompound[2]);
   const commaCompound = after.match(new RegExp(`^\\s*,\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaCompound) return compoundValue(commaCompound[1], commaCompound[2]);
+  // Dozen and pair phrases come before the single-word patterns
+  // below: those would read only the count word ("candles: two
+  // dozen" drafted two) or just the article ("candles: a dozen"
+  // drafted one).
+  const colonGroup = after.match(new RegExp(`^\\s*:\\s*(${GROUP_PHRASE})\\b`));
+  if (colonGroup) return groupPhraseValue(colonGroup[1]);
+  const parenGroup = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\s*\\)`));
+  if (parenGroup) return groupPhraseValue(parenGroup[1]);
+  const bracketGroup = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\s*\\]`));
+  if (bracketGroup) return groupPhraseValue(bracketGroup[1]);
+  const dashGroup = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${GROUP_PHRASE})\\b`));
+  if (dashGroup) return groupPhraseValue(dashGroup[1]);
+  const equalsGroup = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\b`));
+  if (equalsGroup) return groupPhraseValue(equalsGroup[1]);
+  const commaGroup = after.match(new RegExp(`^\\s*,\\s*(${GROUP_PHRASE})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
+  if (commaGroup) return groupPhraseValue(commaGroup[1]);
   const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (colon) return quantityValue(colon[1] ?? colon[2]);
   const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\)`));
