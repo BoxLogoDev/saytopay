@@ -55,9 +55,23 @@ const FILLER_WORDS = new Set([
 // trailing count was silently ignored and every such sentence drafted
 // a quantity of 1. Only a digit count after x/× counts — a bare "x"
 // with no number invents nothing.
+//
+// The same list style also writes the count after a colon or in
+// parentheses: "mugs: 3", "candles: two", "mugs (3)", "notebooks
+// (two)". Before this, those counts were silently ignored too and
+// every such entry drafted a quantity of 1. A colon or parenthesis
+// binds the count to the item right before it, so it cannot be
+// confused with a quantity written for the next item. A colon with
+// no count after it ("a mug: it was great") invents nothing.
 function detectTrailingQuantity(afterRaw) {
-  const m = String(afterRaw || "").match(/^\s*[x×]\s*(\d{1,3})\b/);
-  return m ? parseInt(m[1], 10) : null;
+  const after = String(afterRaw || "");
+  const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
+  if (x) return parseInt(x[1], 10);
+  const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\b`));
+  if (colon) return quantityValue(colon[1] ?? colon[2]);
+  const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\s*\\)`));
+  if (paren) return quantityValue(paren[1] ?? paren[2]);
+  return null;
 }
 
 function stripFillerWords(before) {

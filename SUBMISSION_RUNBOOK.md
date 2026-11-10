@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 38th cycle (2026-11-10) creation
-is verified again (order 31X868563M5989230, CREATED, $45.50; status
+alone does not clear this gate. As of the 40th cycle (2026-11-10) creation
+is verified again (order 67G497887U836021G, CREATED, $45.50; status
 lookup returned CREATED with no capture, and an
 unapproved capture was refused by the real API with 422
 `ORDER_NOT_APPROVED`) but approval
@@ -26,13 +26,13 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the 37th-cycle commit
-  acf1b88509ed046bafcbc78fdd09f8ef3be676dd (code and docs through the
-  37th cycle are reflected; only this HEAD correction and the
-  37th-cycle DEVLOG entry are local until the next push).
+- Remote HEAD is the 38th-cycle commit
+  22ab6a0388793d010be8513d63dc13bd27dfebbd (code and docs through the
+  38th cycle are reflected; the 38th-cycle DEVLOG entry, the 39th-cycle
+  edits, and the 40th-cycle edits are local until the next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  58-test suite.
+  61-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -40,7 +40,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 38th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 40th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

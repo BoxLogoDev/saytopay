@@ -150,6 +150,44 @@ test("trailing x-count applies to its own item only", () => {
   assert.equal(next.items.find((i) => i.sku === "candle").quantity, 1);
 });
 
+test("parses a trailing list-style count after a colon", () => {
+  const d = parseOrderText("mugs: 3");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const list = parseOrderText("mugs: 3, candles: 2");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.total, 63);
+  const word = parseOrderText("candles: two");
+  assert.equal(word.items[0].quantity, 2);
+  assert.equal(word.total, 27);
+});
+
+test("parses a trailing list-style count in parentheses", () => {
+  const d = parseOrderText("mugs (3)");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const word = parseOrderText("notebooks (two)");
+  assert.equal(word.items[0].quantity, 2);
+  assert.equal(word.total, 19);
+  const x = parseOrderText("mugs (x3)");
+  assert.equal(x.items[0].quantity, 3);
+});
+
+test("a colon or parenthesis without a count invents nothing, and a comma count stays with the next item", () => {
+  const colon = parseOrderText("a mug: it was great");
+  assert.equal(colon.items[0].quantity, 1);
+  assert.equal(colon.total, 12);
+  const comma = parseOrderText("mugs, 3 candles");
+  assert.equal(comma.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(comma.items.find((i) => i.sku === "candle").quantity, 3);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("trailing mentions are summed and a bare x invents nothing", () => {
   const d = parseOrderText("mugs x2 and mugs x3");
   assert.equal(d.items.length, 1);

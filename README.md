@@ -46,7 +46,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (58 tests) covers the natural-language parser
+The test suite (61 tests) covers the natural-language parser
 (including group words — "a pair of headphones" and "a couple of
 mugs" draft two, "two pairs" drafts four, and "a couple of dozen
 mugs" drafts twenty-four — container words: "3 boxes of candles"
@@ -67,7 +67,9 @@ headphones" is two headphones, "a dozen red candles" is twelve
 candles, "a pair of black headphones" is two, and "no red mugs"
 drafts no mugs — trailing counts written after
 the item: "mugs x3" is three mugs and "coffee beans x2" is two, applied
-to that item only — word-boundary matching:
+to that item only — and list-style counts after the item: "mugs: 3",
+"candles: two", and "mugs (3)" draft those quantities for that item,
+while a colon with no count after it invents nothing — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
 while plurals like "mugs" and "notebooks" still match — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
