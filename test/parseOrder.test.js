@@ -218,6 +218,44 @@ test("parses trailing dash and bracket counts after the item", () => {
   assert.equal(bracketX.items[0].quantity, 3);
 });
 
+test("parses a trailing equals-sign count after the item", () => {
+  const d = parseOrderText("mugs = 3");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const word = parseOrderText("candles = two");
+  assert.equal(word.items[0].quantity, 2);
+  assert.equal(word.total, 27);
+  const tight = parseOrderText("mugs =3");
+  assert.equal(tight.items[0].quantity, 3);
+});
+
+test("a trailing equals-sign count applies to its own item only", () => {
+  const list = parseOrderText("mugs = 3, candles = 2");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.total, 63);
+  const next = parseOrderText("notebooks = 2 and a mug");
+  assert.equal(next.items.find((i) => i.sku === "notebook").quantity, 2);
+  assert.equal(next.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(next.total, 31);
+});
+
+test("an equals sign without a count or with a longer number invents nothing", () => {
+  const prose = parseOrderText("a mug = it was great");
+  assert.equal(prose.items[0].quantity, 1);
+  assert.equal(prose.total, 12);
+  const year = parseOrderText("mugs = 2026");
+  assert.equal(year.items[0].quantity, 1);
+  const colonYear = parseOrderText("mugs: 2026");
+  assert.equal(colonYear.items[0].quantity, 1);
+  const dashYear = parseOrderText("mugs - 2026");
+  assert.equal(dashYear.items[0].quantity, 1);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a bare number glued to a unit or a longer number invents nothing", () => {
   const unit = parseOrderText("coffee beans 500g");
   assert.equal(unit.items[0].quantity, 1);

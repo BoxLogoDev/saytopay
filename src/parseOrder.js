@@ -20,6 +20,12 @@ const ONES_WORDS = {
 
 const QUANTITY_TOKEN = String.raw`\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a|an`;
 
+// The word-only part of QUANTITY_TOKEN (no \d+ alternative). The
+// trailing-count patterns below pair it with a guarded \d{1,3}: the
+// shared token's \d+ alternative would otherwise swallow a longer
+// number whole ("mugs = 2026" drafted 2026, clamped to 99).
+const QUANTITY_WORD_TOKEN = QUANTITY_TOKEN.split("|").slice(1).join("|");
+
 function quantityValue(token) {
   if (token == null) return 1;
   return /^\d+$/.test(token) ? parseInt(token, 10) : NUMBER_WORDS[token] ?? 1;
@@ -72,18 +78,28 @@ const FILLER_WORDS = new Set([
 // ("coffee beans 500g") or a longer number ("mugs 2026") invents
 // nothing, and a comma still separates items, so the count in
 // "mugs, 3 candles" still belongs to the candles.
+//
+// The same shorthand also writes the count after an equals sign,
+// spreadsheet style: "mugs = 3", "candles = two", "mugs =3".
+// Before this, those counts were silently ignored too and every
+// such entry drafted a quantity of 1. An equals sign with no count
+// after it ("a mug = it was great") invents nothing, and a longer
+// number ("mugs = 2026") invents nothing either, exactly like the
+// bare-number form.
 function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
-  const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\b`));
+  const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (colon) return quantityValue(colon[1] ?? colon[2]);
-  const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\s*\\)`));
+  const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\)`));
   if (paren) return quantityValue(paren[1] ?? paren[2]);
-  const bracket = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\s*\\]`));
+  const bracket = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\]`));
   if (bracket) return quantityValue(bracket[1] ?? bracket[2]);
-  const dash = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:(\\d{1,3})|(${QUANTITY_TOKEN}))\\b`));
+  const dash = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (dash) return quantityValue(dash[1] ?? dash[2]);
+  const equals = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
+  if (equals) return quantityValue(equals[1] ?? equals[2]);
   const bare = after.match(/^\s+(\d{1,3})(?![\dA-Za-z])(?!\.\d)/);
   if (bare) return parseInt(bare[1], 10);
   return null;

@@ -44,7 +44,7 @@ when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or when a general descriptive
 adjective does ("2 black headphones" drafts two, "a dozen red
 candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
-shopping-list style ("mugs x3" drafts three). Keywords match on word boundaries,
+shopping-list style ("mugs x3" and "mugs = 3" draft three). Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
 ("mugs", "notebooks") still match. An item the buyer explicitly rules
@@ -77,7 +77,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 64 passing) cover the parser (including group
+- Tests (`npm test`, 67 passing) cover the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
   four — container words — "3 boxes of candles" drafts three and a
   negated container drafts none — number
@@ -92,7 +92,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   adjective ("2 black headphones" drafts two, "no red mugs" drafts
   none), trailing counts after the item
   ("mugs x3", list-style "mugs: 3" and "mugs (3)", and the bare, dash,
-  and bracket shorthands "mugs 3", "mugs - 3", and "mugs [3]"), word-boundary matching so
+  bracket, and equals shorthands "mugs 3", "mugs - 3", "mugs [3]", and
+  "mugs = 3", while a longer number after any of them invents
+  nothing), word-boundary matching so
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
