@@ -11,9 +11,10 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 42nd cycle (2026-11-10) creation
-is verified again (order 3KF70461TG6035500, CREATED, $45.50; status
-lookup returned CREATED with no capture, and an
+alone does not clear this gate. As of the 43rd cycle (2026-11-10) creation
+is verified again (order 02C08427SH391302H, CREATED, $45.50; status
+lookup returned CREATED with no capture — items coffee-beans ×2 +
+notebook ×1 — and an
 unapproved capture was refused by the real API with 422
 `ORDER_NOT_APPROVED`) but approval
 → capture is still unverified: it needs the owner signed in to PayPal
@@ -26,11 +27,11 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is still the 40th-cycle commit
-  d562c704e5cef3b0d628d1b0006a3f0695cf8b91 (re-verified in the 41st
-  cycle via the GitHub read tool; code and docs through the
-  40th cycle are reflected; the 40th-cycle DEVLOG entry and the
-  41st- and 42nd-cycle edits are local until the next push).
+- Remote HEAD is the 42nd-cycle commit
+  bed0a48b3f4c5bfddaa031c80096689b308bf261 (push response ref in the
+  42nd cycle; code and docs through the 42nd cycle are reflected;
+  the 42nd-cycle DEVLOG entry and the 43rd-cycle edits are local
+  until the next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
   64-test suite.
@@ -41,7 +42,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 42nd cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 43rd cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
