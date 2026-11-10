@@ -20,9 +20,10 @@ instead. You say what you want to buy, and the app builds the order for you."
 On-screen action: type `2 coffee beans and a notebook`, click
 **Build order draft**.
 Narration: "Here is the whole input: '2 coffee beans and a notebook.' One
-natural-language sentence goes in. The app's single AI-style step reads the
-items and quantities and turns them into a structured order draft. There is
-no separate product search and no manual cart."
+natural-language sentence goes in. The app's AI step — a real language
+model when a key is configured, the built-in rules parser otherwise —
+reads the items and quantities and turns them into a structured order
+draft. There is no separate product search and no manual cart."
 
 ### Scene 3 — Review the draft (0:50–1:15) · Screen: order draft table
 On-screen action: pause on the draft table — Coffee beans 1kg ×2 ($36.00),
@@ -57,6 +58,33 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] No credential, secret, personal email, or real name visible in any tab
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
+
+## Filming status (2026-11-10, 53rd cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
+  `ai.configured: false` — no LLM key in this environment, so the draft
+  on camera is produced by the rules fallback and the draft note says
+  so), parse ($45.50 for the filmed example, `source: rules`), catalog
+  (12 items), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 91/91. Real sandbox order creation for the filmed
+  sentence was also re-verified (order 5N025594MX428222R, CREATED,
+  $45.50, approval URL issued; status lookup returned CREATED with no
+  capture — items coffee-beans ×2 + notebook ×1 — and an unapproved
+  capture was refused by the real API with 422 `ORDER_NOT_APPROVED`)
+  — creation only, not capture. The submission images (cover + flow,
+  1600x900) are still in place in the submission-assets folder. The
+  owner is traveling in Ishigaki; the approval step still needs the
+  owner's PayPal Developer sign-in.
+- Accuracy fixes (this cycle): Scene 2 narration no longer calls the
+  language step "AI-style" — it now states the real behaviour since
+  the 52nd cycle (a real language model when a key is configured, the
+  built-in rules parser otherwise). `FILMING_RUNBOOK.md` pre-flight
+  now requires 91/91 tests and explains the `ai.configured` health
+  field. `SUBMISSION_RUNBOOK.md` Gate 0 now cites this cycle's
+  creation order instead of the 51st cycle's, and Step 1 cites the
+  52nd-cycle remote HEAD and the 91-test suite.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
 
 ## Filming status (2026-11-10, 39th cycle)
 

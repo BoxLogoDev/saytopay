@@ -8,7 +8,7 @@ QA cycle completes a real sandbox create → approve → capture run.
 ## Pre-flight (5 minutes, before recording)
 
 ```bash
-npm test        # must be 76/76 passing
+npm test        # must be 91/91 passing
 npm start       # http://localhost:3000
 ```
 
@@ -16,7 +16,11 @@ Then verify in the browser, in this order:
 
 1. `GET /api/health` shows `paypalEnv: sandbox` and
    `credentialsConfigured: true`. If it shows `false`, stop — do not film
-   the payment path on a misconfigured app.
+   the payment path on a misconfigured app. It also shows `ai.configured`:
+   `false` means the draft on camera is produced by the built-in rules
+   fallback (the draft note says so); `true` names the provider and model
+   that produced it. Either state is filmable — never claim the other one
+   on camera.
 2. The home page shows the demo catalog list (12 items) under the input.
 3. Typing `2 coffee beans and a notebook` and clicking **Build order
    draft** shows Coffee beans 1kg ×2 ($36.00) + Paper notebook ×1
