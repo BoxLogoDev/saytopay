@@ -7,7 +7,7 @@ Built for the PayPal AI Hackathon 2026. Category: AI Shopping Assistant / Agenti
 ## How it works
 
 1. **Say it** — one sentence, e.g. `2 coffee beans and a notebook`. The home page lists the demo catalog (names and prices, served by `GET /api/catalog`): click an item to start a draft for it, or name several in one sentence. If nothing matches, the app says so next to the input instead of silently showing no draft.
-2. **Review and edit the draft** — the app's single AI-style step converts the sentence into items, quantities and a total (`src/parseOrder.js`). It is a deterministic offline parser over a small demo catalog, behind a function boundary that an LLM call can replace without touching the payment flow. You can then adjust quantities or remove items in the draft table; the server reprices the edited draft from the catalog (`src/draft.js`) — client-supplied prices are never trusted.
+2. **Review and edit the draft** — the app's single AI step converts the sentence into items, quantities and a total. When an LLM API key is configured (see below), a real AI model does this step (`src/llm.js`, `src/aiParse.js`): the model returns only SKUs and quantities, and the draft is rebuilt from the catalog on the server, so the model never sets prices. The client is provider-neutral — OpenAI, Anthropic, Gemini, or any OpenAI-compatible endpoint, chosen by environment variables. If no key is configured, or the model call fails or times out, a deterministic offline rules parser over the demo catalog (`src/parseOrder.js`) produces the draft instead, so the demo always works. The parse response and the draft note say which path produced the draft (`source`). You can then adjust quantities or remove items in the draft table; the server reprices the edited draft from the catalog (`src/draft.js`) — client-supplied prices are never trusted.
 3. **Pay with PayPal (sandbox)** — the server rebuilds the draft from the catalog (SKU + quantity only), creates a PayPal Orders v2 order, redirects the buyer to the PayPal approval page, and captures the order on return (`src/paypal.js`, `src/server.js`). On return the app first looks the order up (`GET /api/orders/:id`): an already-completed payment is shown as-is instead of being captured a second time, and an order that was never approved is reported without capturing anything.
 4. **Proof** — the result screen shows the order ID, capture ID and amount; the same transaction appears in the PayPal sandbox dashboard.
 
@@ -24,7 +24,14 @@ Requirements: Node.js 18+ (no dependencies to install).
 export PAYPAL_CLIENT_ID=your-sandbox-client-id
 export PAYPAL_CLIENT_SECRET=your-sandbox-secret
 
-# 2. Start
+# 2. (Optional) Turn on the real AI model for the language step by
+#    setting any ONE provider key (also via .env):
+export OPENAI_API_KEY=your-key        # or ANTHROPIC_API_KEY,
+#    GEMINI_API_KEY, or LLM_API_KEY with LLM_PROVIDER / LLM_API_BASE
+#    for an OpenAI-compatible endpoint. LLM_MODEL overrides the model.
+#    With no key, the built-in rules parser handles every sentence.
+
+# 3. Start
 npm start
 # -> http://localhost:3000
 ```
@@ -46,7 +53,12 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (76 tests) covers the natural-language parser
+The test suite (91 tests) covers the AI language step (provider
+configuration from environment variables, reply validation for the
+OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
+model output, and fallback to the rules parser on failure, garbage
+replies, and timeouts — all with mocked model responses and a local
+stand-in endpoint, so no real API key is needed), the natural-language parser
 (including group words — "a pair of headphones" and "a couple of
 mugs" draft two, "two pairs" drafts four, and "a couple of dozen
 mugs" drafts twenty-four — container words: "3 boxes of candles"
@@ -105,7 +117,9 @@ with `400 invalid_json`, not a misleading `502 upstream_error`.
 
 ## Layout
 
-- `src/parseOrder.js` — natural language → order draft (the AI step)
+- `src/aiParse.js` — the language step: LLM first when a key is configured, rules parser as fallback; reports which path produced the draft
+- `src/llm.js` — provider-neutral LLM client (OpenAI / Anthropic / Gemini / OpenAI-compatible), configured by environment variables only
+- `src/parseOrder.js` — deterministic offline rules parser (no-key path and fallback)
 - `src/draft.js` — server-side repricing of an edited draft from the catalog
 - `src/catalog.js` — demo catalog with fixed USD prices, plus its public view for the UI (`GET /api/catalog`)
 - `src/paypal.js` — PayPal Orders v2 client (token, create, capture)

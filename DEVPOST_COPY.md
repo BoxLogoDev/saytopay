@@ -14,7 +14,7 @@ Type what you want to buy in one sentence — SayToPay builds the order draft an
 AI Shopping Assistant · Agentic Commerce
 
 ## Built with
-Node.js (no external dependencies), PayPal Orders v2 API (sandbox), HTML/CSS/JavaScript
+Node.js (no external dependencies), PayPal Orders v2 API (sandbox), an LLM API through a provider-neutral client (OpenAI / Anthropic / Gemini / OpenAI-compatible — key supplied by environment variable; the model name used at judging time is the one shown in the app's status line and parse response), HTML/CSS/JavaScript
 
 ## Inspiration
 Checkout still starts with a cart you assemble by hand: search, click, count,
@@ -27,7 +27,15 @@ SayToPay takes one natural-language sentence (for example, "2 coffee beans
 and a notebook"), converts it into a structured order draft with items,
 quantities, and a total, lets the buyer review the draft, and then completes
 a real PayPal sandbox payment through the Orders flow: create order →
-buyer approval → capture. Group words count too — "a pair of
+buyer approval → capture. The conversion is done by a real AI model
+whenever an LLM API key is configured: a provider-neutral client
+(`src/llm.js`) calls OpenAI, Anthropic, Gemini, or an OpenAI-compatible
+endpoint, and the model returns only SKUs and quantities — the server
+then builds and prices the draft from the catalog, so the model never
+sets prices. With no key configured, or if the model call fails or
+times out, a built-in deterministic parser handles the sentence
+instead, and the app states which path produced each draft. The
+parser behaviors below are that built-in path's. Group words count too — "a pair of
 headphones" and "a couple of mugs" draft two, and "two pairs" drafts
 four. Container words count too — "3 boxes of candles" drafts three
 and "2 sets of headphones" drafts two, and a container the buyer rules
@@ -66,18 +74,27 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 [SANDBOX_CAPTURE_ID], amount $45.50 USD, status COMPLETED.
 
 ## How we built it
-- A single AI-style step at the front: `parseOrderText()` in
-  `src/parseOrder.js` turns the sentence into `{ items, total, currency }`.
-  It is a deterministic offline parser over a small demo catalog, placed
-  behind a function boundary so an LLM call can replace it without touching
-  the payment flow.
+- A single AI step at the front: `parseOrderSmart()` in `src/aiParse.js`
+  turns the sentence into `{ items, total, currency }`. With an LLM API
+  key in the environment, `src/llm.js` — a provider-neutral client for
+  OpenAI, Anthropic, Gemini, and OpenAI-compatible endpoints — asks the
+  model for `{ sku, quantity }` pairs only; the reply is validated
+  against the catalog and repriced on the server by the same code that
+  reprices hand-edited drafts. Without a key, or on any model failure
+  or timeout, the deterministic offline parser in `src/parseOrder.js`
+  takes over, and the parse response records which path was used.
 - PayPal integration is the center: `src/paypal.js` implements the Orders v2
   flow — OAuth token, create order with the draft's line items, and capture
   after buyer approval — against `api-m.sandbox.paypal.com`.
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 76 passing) cover the parser (including group
+- Tests (`npm test`, 91 passing) cover the AI step (provider
+  configuration from environment variables, the OpenAI, Anthropic, and
+  Gemini response shapes, catalog repricing of model output, and
+  fallback to the rules parser on failure, garbage replies, and
+  timeouts — all against mocked responses and a local stand-in
+  endpoint) and the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
   four — container words — "3 boxes of candles" drafts three and a
   negated container drafts none — number
@@ -141,16 +158,19 @@ reviewable, auditable draft between the sentence and the money. That draft
 is what makes an AI-initiated payment trustworthy.
 
 ## What's next for SayToPay
-Replace the offline parser with an LLM call behind the same function
-boundary, widen the catalog, and add a confirmation summary spoken back to
-the buyer before approval.
+Widen the catalog beyond the demo set, let the model ask a clarifying
+question when a sentence is ambiguous instead of drafting silently, and
+add a confirmation summary spoken back to the buyer before approval.
 
 ## Try it out / Links
 - Public repository: https://github.com/BoxLogoDev/saytopay
 - Demo video (under 3 minutes): [VIDEO_URL]
 - Run locally: Node.js 18+, set `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
   from your own PayPal sandbox app, then `npm start`. Sandbox only — no
-  real money moves.
+  real money moves. To enable the AI model step, also set one LLM key
+  (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or
+  `LLM_API_KEY` — see `.env.example`); without one, the built-in rules
+  parser handles the language step.
 
 ## Evidence checklist (attach at submission)
 - [ ] Sandbox transaction: order ID + capture ID above, filled from the real run

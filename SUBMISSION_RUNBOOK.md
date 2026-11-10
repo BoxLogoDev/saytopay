@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 50th cycle (2026-11-10) creation
-is verified again (order 4V457322210776357, CREATED, $45.50; status
+alone does not clear this gate. As of the 51st cycle (2026-11-10) creation
+is verified again (order 5DW14048RY3741315, CREATED, $45.50; status
 lookup returned CREATED with no capture — items coffee-beans ×2 +
 notebook ×1 — and an
 unapproved capture was refused by the real API with 422
@@ -27,11 +27,12 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the 48th-cycle commit
-  3b3d8c18cb04b58c9943ca337ef1bb9ae1a24703 (remote HEAD re-read with
-  the GitHub read tool in the 48th cycle; code and docs through the
-  48th-cycle edits are reflected; the 48th-cycle DEVLOG entry and
-  the 49th-cycle edits are local until the next push).
+- Remote HEAD is the 50th-cycle commit
+  a8728f3abfef4220805afd04f3c60897b6e1deff (remote HEAD re-read with
+  the GitHub read tool in the 50th cycle; code and docs through the
+  50th-cycle edits are reflected; the 50th-cycle DEVLOG entry, the
+  51st-cycle edits, and this Step 1 HEAD note are local until the
+  next push).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
   76-test suite.
@@ -42,7 +43,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 50th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 51st cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

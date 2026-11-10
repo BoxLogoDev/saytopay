@@ -2,9 +2,10 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { parseOrderText } from "./parseOrder.js";
 import { publicCatalog } from "./catalog.js";
 import { normalizeDraft } from "./draft.js";
+import { parseOrderSmart } from "./aiParse.js";
+import { llmConfig } from "./llm.js";
 import { paypalConfig, hasCredentials, createOrder, captureOrder, getOrder } from "./paypal.js";
 import { loadEnvFile } from "./env.js";
 
@@ -13,6 +14,9 @@ loadEnvFile();
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "..", "public");
 const config = paypalConfig();
+// Null when no LLM API key is configured: the language step then uses
+// the built-in rules parser (see src/aiParse.js).
+const aiConfig = llmConfig();
 const port = Number(process.env.PORT || 3000);
 
 function json(res, status, body) {
@@ -41,7 +45,13 @@ async function readBody(req) {
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
 
-export function createServer(paypalCfg = config) {
+export function createServer(paypalCfg = config, parseOpts = null) {
+  // Tests may inject a fake LLM config / fetch; by default the process
+  // environment decides (parseOpts null -> env-resolved config).
+  const effectiveParseOpts =
+    parseOpts ?? { config: aiConfig };
+  const effectiveAiConfig =
+    effectiveParseOpts.config === undefined ? aiConfig : effectiveParseOpts.config;
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     try {
@@ -50,6 +60,11 @@ export function createServer(paypalCfg = config) {
           ok: true,
           paypalEnv: paypalCfg.envName,
           credentialsConfigured: hasCredentials(paypalCfg),
+          ai: {
+            configured: Boolean(effectiveAiConfig),
+            provider: effectiveAiConfig?.provider ?? null,
+            model: effectiveAiConfig?.model ?? null,
+          },
         });
       }
 
@@ -61,7 +76,12 @@ export function createServer(paypalCfg = config) {
 
       if (req.method === "POST" && url.pathname === "/api/parse") {
         const { text } = await readBody(req);
-        return json(res, 200, parseOrderText(text));
+        // The language step: a real LLM when a key is configured, the
+        // rules parser otherwise (and as fallback). The response says
+        // which path produced the draft in `source`.
+        const { draft, source } = await parseOrderSmart(text, effectiveParseOpts);
+        console.log(`[parse] source=${JSON.stringify(source)}`);
+        return json(res, 200, { ...draft, source });
       }
 
       // The UI edits quantities/removes items, then asks the server to
@@ -82,7 +102,16 @@ export function createServer(paypalCfg = config) {
         const { text, draft } = await readBody(req);
         // Never trust client-supplied prices: a supplied draft is rebuilt
         // from the catalog (SKU + quantity only) before the order is created.
-        const orderDraft = draft ? normalizeDraft(draft) : parseOrderText(text);
+        let orderDraft;
+        let parseSource = null;
+        if (draft) {
+          orderDraft = normalizeDraft(draft);
+        } else {
+          const parsed = await parseOrderSmart(text, effectiveParseOpts);
+          orderDraft = parsed.draft;
+          parseSource = parsed.source;
+          console.log(`[orders] parse source=${JSON.stringify(parseSource)}`);
+        }
         if (!orderDraft.items?.length || !(orderDraft.total > 0)) {
           return json(res, 400, { error: "empty_order", message: "The order draft has no items." });
         }
@@ -91,7 +120,7 @@ export function createServer(paypalCfg = config) {
           returnUrl: `${base}/return`,
           cancelUrl: `${base}/cancel`,
         });
-        return json(res, 201, created);
+        return json(res, 201, parseSource ? { ...created, parseSource } : created);
       }
 
       // Read-only status lookup: the return page checks this before
@@ -140,6 +169,6 @@ export function createServer(paypalCfg = config) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   createServer().listen(port, () => {
-    console.log(`SayToPay listening on http://localhost:${port} (PayPal env: ${config.envName}, credentials: ${hasCredentials(config) ? "set" : "MISSING"})`);
+    console.log(`SayToPay listening on http://localhost:${port} (PayPal env: ${config.envName}, credentials: ${hasCredentials(config) ? "set" : "MISSING"}, AI: ${aiConfig ? `${aiConfig.provider}/${aiConfig.model}` : "not configured — rules parser"})`);
   });
 }

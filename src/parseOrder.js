@@ -333,14 +333,13 @@ function money(n) {
 }
 
 /**
- * The single AI-style step of the app: turn one natural-language sentence
- * into a structured order draft (items, quantities, total).
+ * The built-in rules parser: turn one natural-language sentence into a
+ * structured order draft (items, quantities, total) with no API key.
  *
- * This is a deterministic, offline parser over the demo catalog so the demo
- * runs anywhere with no extra API key. The function boundary is the swap
- * point: replace the body with an LLM call that returns the same shape
- * ({ items: [{ sku, name, quantity, unitPrice }], total, currency })
- * and the rest of the PayPal flow is unchanged.
+ * This is the no-key path and the fallback of the app's language step.
+ * When an LLM API key is configured, src/aiParse.js asks the model
+ * first and only uses this parser if that call fails; both paths
+ * produce the same draft shape and are repriced from the catalog.
  */
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

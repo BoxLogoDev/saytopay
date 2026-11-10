@@ -36,7 +36,15 @@ function renderDraft(d) {
     )
     .join("");
   document.querySelector("#draftTotal").textContent = `Total: $${d.total.toFixed(2)} ${d.currency}`;
-  document.querySelector("#draftNote").textContent = d.note || "";
+  // Say which language path produced the draft: the configured AI
+  // model, or the built-in rules parser (also used as fallback).
+  const sourceNote =
+    d.source?.type === "llm"
+      ? ` Parsed by AI model ${d.source.model} (${d.source.provider}); prices are set by the server from the catalog.`
+      : d.source?.fallback
+        ? " The AI model call failed, so the built-in rules parser produced this draft."
+        : "";
+  document.querySelector("#draftNote").textContent = (d.note || "") + sourceNote;
   document.querySelector("#step-draft").hidden = d.items.length === 0;
   document.querySelector("#payBtn").disabled = d.items.length === 0;
   tbody.querySelectorAll(".qty").forEach((input) => {
@@ -150,6 +158,6 @@ document.querySelector("#payBtn").addEventListener("click", async () => {
   try {
     const h = await api("/api/health");
     document.querySelector("#health").textContent =
-      `PayPal environment: ${h.paypalEnv} · sandbox credentials: ${h.credentialsConfigured ? "configured" : "not configured (see .env.example)"}`;
+      `PayPal environment: ${h.paypalEnv} · sandbox credentials: ${h.credentialsConfigured ? "configured" : "not configured (see .env.example)"} · AI model: ${h.ai?.configured ? `${h.ai.model} (${h.ai.provider})` : "not configured — built-in rules parser"}`;
   } catch {}
 })();
