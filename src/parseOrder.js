@@ -26,6 +26,18 @@ const QUANTITY_TOKEN = String.raw`\d+|one|two|three|four|five|six|seven|eight|ni
 // number whole ("mugs = 2026" drafted 2026, clamped to 99).
 const QUANTITY_WORD_TOKEN = QUANTITY_TOKEN.split("|").slice(1).join("|");
 
+// Compound tens for trailing counts: "twenty-one", "forty two". A
+// single-word token can only ever read the tens part ("mugs:
+// twenty-one" drafted twenty, not twenty-one) or nothing at all
+// where a closing delimiter follows the word ("mugs (twenty-one)"
+// drafted one). The trailing patterns try this two-word form first.
+const TENS_TOKEN = "twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety";
+const ONES_TOKEN = "one|two|three|four|five|six|seven|eight|nine";
+
+function compoundValue(tens, ones) {
+  return TENS_WORDS[tens] + ONES_WORDS[ones];
+}
+
 function quantityValue(token) {
   if (token == null) return 1;
   return /^\d+$/.test(token) ? parseInt(token, 10) : NUMBER_WORDS[token] ?? 1;
@@ -96,10 +108,34 @@ const FILLER_WORDS = new Set([
 // "please", sentence punctuation, or the end of the sentence — so
 // the count in "mugs, 3 candles" still belongs to the candles,
 // exactly as the bare-number rule below already guarantees.
+//
+// Every word form above also accepts a compound number word —
+// "mugs: twenty-one", "mugs (forty two)", "mugs, twenty-one of
+// them". Before this, the compound was read as just its tens word
+// ("mugs: twenty-one" drafted twenty) or, where a closing bracket
+// or paren followed, as nothing at all ("mugs (twenty-one)"
+// drafted one). The one gap noted in the 46th cycle — the
+// parenthesised compound — is part of this same fix.
 function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "");
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
+  // Compound number words ("twenty-one", "forty two") come first:
+  // the single-word patterns below would read only the tens word
+  // where they can match at all. The x form stays digit-only, as
+  // documented above.
+  const colonCompound = after.match(new RegExp(`^\\s*:\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
+  if (colonCompound) return compoundValue(colonCompound[1], colonCompound[2]);
+  const parenCompound = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\)`));
+  if (parenCompound) return compoundValue(parenCompound[1], parenCompound[2]);
+  const bracketCompound = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\]`));
+  if (bracketCompound) return compoundValue(bracketCompound[1], bracketCompound[2]);
+  const dashCompound = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
+  if (dashCompound) return compoundValue(dashCompound[1], dashCompound[2]);
+  const equalsCompound = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
+  if (equalsCompound) return compoundValue(equalsCompound[1], equalsCompound[2]);
+  const commaCompound = after.match(new RegExp(`^\\s*,\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
+  if (commaCompound) return compoundValue(commaCompound[1], commaCompound[2]);
   const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (colon) return quantityValue(colon[1] ?? colon[2]);
   const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\)`));

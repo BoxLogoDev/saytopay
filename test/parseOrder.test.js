@@ -282,6 +282,45 @@ test("parses a postposed comma count that closes the sentence", () => {
   assert.equal(punct.items[0].quantity, 3);
 });
 
+test("parses a trailing compound number word after a colon, dash, or equals sign", () => {
+  const colon = parseOrderText("mugs: twenty-one");
+  assert.equal(colon.items[0].quantity, 21);
+  assert.equal(colon.total, 252);
+  const spaced = parseOrderText("candles: twenty one");
+  assert.equal(spaced.items[0].quantity, 21);
+  assert.equal(spaced.total, 283.5);
+  const dash = parseOrderText("mugs - twenty-one");
+  assert.equal(dash.items[0].quantity, 21);
+  const equals = parseOrderText("notebooks = forty-two");
+  assert.equal(equals.items[0].quantity, 42);
+  assert.equal(equals.total, 399);
+});
+
+test("parses a trailing compound number word in parentheses or brackets", () => {
+  const paren = parseOrderText("mugs (twenty-one)");
+  assert.equal(paren.items[0].quantity, 21);
+  assert.equal(paren.total, 252);
+  const parenSpaced = parseOrderText("mugs (forty two)");
+  assert.equal(parenSpaced.items[0].quantity, 42);
+  assert.equal(parenSpaced.total, 504);
+  const bracket = parseOrderText("mugs [twenty-one]");
+  assert.equal(bracket.items[0].quantity, 21);
+  const list = parseOrderText("mugs (twenty-one), candles: two");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 21);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+});
+
+test("parses a postposed comma compound count and keeps the next-item boundary", () => {
+  const word = parseOrderText("mugs, twenty-one of them");
+  assert.equal(word.items[0].quantity, 21);
+  assert.equal(word.total, 252);
+  const next = parseOrderText("mugs, twenty-one candles");
+  assert.equal(next.items.find((i) => i.sku === "mug").quantity, 1);
+  assert.equal(next.items.find((i) => i.sku === "candle").quantity, 21);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("a comma count followed by another item still belongs to that item", () => {
   const word = parseOrderText("mugs, three candles");
   assert.equal(word.items.find((i) => i.sku === "mug").quantity, 1);

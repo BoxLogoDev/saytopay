@@ -44,7 +44,7 @@ when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or when a general descriptive
 adjective does ("2 black headphones" drafts two, "a dozen red
 candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
-shopping-list style ("mugs x3" and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles). Keywords match on word boundaries,
+shopping-list style ("mugs x3" and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one). Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
 ("mugs", "notebooks") still match. An item the buyer explicitly rules
@@ -77,7 +77,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 70 passing) cover the parser (including group
+- Tests (`npm test`, 73 passing) cover the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
   four — container words — "3 boxes of candles" drafts three and a
   negated container drafts none — number
@@ -96,7 +96,10 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   "mugs = 3", while a longer number after any of them invents
   nothing, and a postposed comma count that closes the mention —
   "mugs, three of them" and "mugs, 3" draft three, while the count
-  in "mugs, 3 candles" still belongs to the candles), word-boundary matching so
+  in "mugs, 3 candles" still belongs to the candles, and compound
+  number words in every trailing form — "mugs: twenty-one" drafts
+  twenty-one, not twenty, and "mugs (forty two)" drafts forty-two,
+  not one), word-boundary matching so
   "booking" never drafts a book while plurals still match,
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
