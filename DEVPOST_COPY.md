@@ -38,7 +38,8 @@ instead, and the app states which path produced each draft. The
 parser behaviors below are that built-in path's. Group words count too — "a pair of
 headphones" and "a couple of mugs" draft two, and "two pairs" drafts
 four. Container words count too — "3 boxes of candles" drafts three
-and "2 sets of headphones" drafts two, and a container the buyer rules
+and "2 sets of headphones" drafts two, a container with an inner count
+multiplies ("2 boxes of 12 candles" drafts twenty-four), and a container the buyer rules
 out ("no boxes of candles") drafts none. Quantities said as number words work past
 twelve too — "twenty notebooks" drafts twenty and "twenty-one mugs"
 drafts twenty-one, not one. Scale words count too — "a hundred
@@ -89,14 +90,16 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 91 passing) cover the AI step (provider
+- Tests (`npm test`, 94 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
   timeouts — all against mocked responses and a local stand-in
   endpoint) and the parser (including group
   words — "a pair of headphones" drafts two and "two pairs" drafts
-  four — container words — "3 boxes of candles" drafts three and a
+  four — container words — "3 boxes of candles" drafts three, a
+  container with an inner count multiplies ("2 boxes of 12 candles"
+  drafts twenty-four), and a
   negated container drafts none — number
   words above twelve and compound tens — "twenty notebooks" drafts
   twenty, "twenty-one mugs" drafts twenty-one — scale words —

@@ -494,6 +494,42 @@ test("a counted container drafts that many of the item it holds", () => {
   assert.equal(large.total, 27);
 });
 
+test("a container with an inner count drafts the product of both counts", () => {
+  const boxes = parseOrderText("2 boxes of 12 candles");
+  assert.equal(boxes.items.length, 1);
+  assert.equal(boxes.items[0].sku, "candle");
+  assert.equal(boxes.items[0].quantity, 24);
+  assert.equal(boxes.total, 24 * 13.5);
+  const mugs = parseOrderText("3 boxes of 6 mugs");
+  assert.equal(mugs.items[0].quantity, 18);
+  assert.equal(mugs.total, 216);
+  const one = parseOrderText("a box of 12 candles");
+  assert.equal(one.items[0].quantity, 12);
+  const noInner = parseOrderText("2 boxes of candles");
+  assert.equal(noInner.items[0].quantity, 2);
+});
+
+test("container inner counts accept number words, compounds, dozen, and a filler adjective", () => {
+  const words = parseOrderText("two boxes of twelve candles");
+  assert.equal(words.items[0].quantity, 24);
+  const compound = parseOrderText("2 boxes of twenty-one candles");
+  assert.equal(compound.items[0].quantity, 42);
+  assert.equal(compound.total, 42 * 13.5);
+  const dozen = parseOrderText("2 boxes of a dozen candles");
+  assert.equal(dozen.items[0].quantity, 24);
+  const large = parseOrderText("2 large boxes of 12 candles");
+  assert.equal(large.items[0].quantity, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("negation still covers a container with an inner count", () => {
+  const d = parseOrderText("no boxes of 12 candles, just a mug");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.total, 12);
+});
+
 test("a container alone does not invent a quantity", () => {
   const d = parseOrderText("a box of candles");
   assert.equal(d.items.length, 1);

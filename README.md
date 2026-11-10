@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (91 tests) covers the AI language step (provider
+The test suite (94 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -62,7 +62,9 @@ stand-in endpoint, so no real API key is needed), the natural-language parser
 (including group words — "a pair of headphones" and "a couple of
 mugs" draft two, "two pairs" drafts four, and "a couple of dozen
 mugs" drafts twenty-four — container words: "3 boxes of candles"
-drafts three, "2 sets of headphones" drafts two, and a negated
+drafts three, "2 sets of headphones" drafts two, a container with an
+inner count multiplies ("2 boxes of 12 candles" drafts twenty-four),
+and a negated
 container ("no boxes of candles") drafts none — number words above twelve — "twenty notebooks" is twenty
 notebooks and "twenty-one mugs" is twenty-one, not one — scale words:
 "a hundred notebooks" and "a thousand candles" draft the scaled

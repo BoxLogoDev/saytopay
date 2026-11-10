@@ -220,6 +220,41 @@ const CONTAINER_WORDS = [
   "case", "cases", "bundle", "bundles", "carton", "cartons",
 ];
 
+// A quantity phrase for the container rules below: a digit count, a
+// single number word, or a compound tens phrase ("twenty one").
+const QTY_PHRASE = `(?:(?:${TENS_TOKEN})\\s+(?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3}(?!\\d))`;
+// The same phrase, or a dozen form of it ("a dozen", "two dozen",
+// "half a dozen", a bare "dozen").
+const COUNT_PHRASE = `(?:half\\s+(?:a\\s+)?dozen|(?:${QTY_PHRASE}\\s+)?dozen|${QTY_PHRASE})`;
+
+function countPhraseValue(phrase) {
+  const p = String(phrase || "").trim();
+  if (/\bdozen$/.test(p)) return groupPhraseValue(p);
+  const compound = p.match(new RegExp(`^(${TENS_TOKEN})\\s+(${ONES_TOKEN})$`));
+  if (compound) return compoundValue(compound[1], compound[2]);
+  return quantityValue(p);
+}
+
+// A container can itself carry a count of the item it holds:
+// "2 boxes of 12 candles" is two boxes of twelve — 24 candles, not
+// 12. Before this, the inner count was the last quantity before the
+// item, so it alone was read and the outer container count was
+// silently dropped ("3 boxes of 6 mugs" drafted six mugs). A filler
+// adjective may sit between the outer count and the container
+// ("2 large boxes of 12 candles"). A container with no outer count
+// ("a box of 12 candles") needs no rule here: the inner count is
+// already the quantity, exactly as the plain rules below read it.
+function detectContainerInnerQuantity(before) {
+  const filler = [...FILLER_WORDS].join("|");
+  const m = before.match(
+    new RegExp(
+      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${filler})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?)\\s+of\\s+(${COUNT_PHRASE})\\s*$`,
+    ),
+  );
+  if (!m) return null;
+  return countPhraseValue(m[1]) * countPhraseValue(m[2]);
+}
+
 function detectQuantity(beforeRaw, allowGroup = true) {
   // Hyphenated quantity phrases mean the same as their spaced forms:
   // "half-dozen" and "half-a-dozen" are six, "two-dozen" is twenty-four.
@@ -229,6 +264,11 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // Only the quantity look-back copy is normalised — keyword matching
   // on the original text is untouched.
   let before = stripFillerWords(String(beforeRaw || "").replace(/-/g, " "));
+  // Container with an inner count first: "2 boxes of 12 candles" is
+  // the product of the two counts, which no rule below can recover
+  // once it has read only the inner one.
+  const containerInner = detectContainerInnerQuantity(before);
+  if (containerInner != null) return containerInner;
   // A quantity may be separated from its item by an "of" connector:
   // "two of the mugs", "three of those candles", "a dozen of the
   // mugs". Before this, the connector hid the quantity and every

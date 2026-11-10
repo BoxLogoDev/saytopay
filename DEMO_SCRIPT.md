@@ -59,6 +59,28 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-10, 54th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
+  `ai.configured: false` — no LLM key in this environment, so the draft
+  on camera is produced by the rules fallback and the draft note says
+  so), parse ($45.50 for the filmed example, `source: rules`), catalog
+  (12 items), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 94/94. The parser now also multiplies a container
+  count by an inner count — "2 boxes of 12 candles" drafts
+  twenty-four, not twelve — verified against the real sandbox with an
+  order created from that sentence (order 21T11910PT994803L,
+  $324.00, candle ×24, CREATED; status lookup matched, and an
+  unapproved capture was refused by the real API with 422
+  `ORDER_NOT_APPROVED`) and the filmed sentence re-created (order
+  7GB081042M823615D, CREATED, $45.50) — creation only, not capture.
+  The submission images (cover + flow, 1600x900) are still in place
+  in the submission-assets folder. The owner is traveling in
+  Ishigaki; the approval step still needs the owner's PayPal
+  Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-10, 53rd cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
