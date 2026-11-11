@@ -1579,3 +1579,30 @@ PayPal AI Hackathon 2026 출품작 제작·QA 로그. 제출 마감 2026-11-13 0
 
 ### 다음 회차 제안
 - 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이고, LLM 키가 들어오면 실모델 호출 검증을 함께 수행한다. 둘 다 없으면 기능 보강 카테고리(키트 범위 안의 작은 개선 1개)로 진행하되 데모·문안은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
+
+## 64회차 — 2026-11-11 08:34 KST · 카테고리: 기능 보강
+
+### 판단 근거
+- 직전 회차는 데모·문안(63회차)이었으므로 같은 카테고리를 반복하지 않았다. 63회차 제안대로, 주인님 재로그인 증거가 없어 승인→캡처 QA를 완료로 기록할 수 없고 LLM 키도 여전히 없는 상태에서 기능 보강 1단위를 수행했다. 최종 제출 단계(2026-11-12 18:00 이후)가 아니다. 주인님은 이시가키 여행(다이빙 2일차) 중이다.
+- 시작 시 재확인: `.env` 존재(PayPal Client ID/Secret 각 길이 80, 값은 기록하지 않음), LLM 키 없음, `npm test` 106/106 통과 상태에서 시작했다.
+
+### 한 일 — 후행 단위 관용구 "by the dozen"·"by the pair" 인식
+- 발견한 결함: 품목 뒤에 오는 단위 관용구가 통째로 무시됐다. 실측(수정 전): `mugs by the dozen` → 머그 1개($12), `candles by the dozen` → 1개, `headphones by the pair` → 1개, `buy mugs by the dozen and candles by the dozen` → 둘 다 1개. "dozen/pair 단위로 산다"는 말이 곧 수량 12·2인데, 앞쪽 표기(`a dozen mugs`)만 읽혀 같은 뜻의 문장이 위치에 따라 청구 금액이 달라지는 위치였다.
+- `src/parseOrder.js` — `detectTrailingQuantity()` 맨 앞에 by-the 패턴을 추가했다: `by the dozen` = 12, `by the pair(s)/couple(s)` = 2. 고정 크기가 없는 단위(`by the case`·`by the box`)는 아무것도 만들지 않는다. 후행 수량이 앞쪽 수량보다 우선한다는 기존 원칙대로 `2 mugs by the dozen`도 12개가 된다.
+- `test/parseOrder.test.js` — 테스트 3개 추가(by the dozen 기본형·혼합 문장, by the pair·후행 우선·쉼표 뒤 please, 크기 없는 단위 무효·표준 예시 무회귀) — 총 106개 → 109개.
+- `README.md`·`DEVPOST_COPY.md`·`FILMING_RUNBOOK.md`·`SUBMISSION_RUNBOOK.md` 정비: by-the 동작 설명과 테스트 수 109개를 실측값으로 갱신, DEMO_SCRIPT 촬영 가능 상태에 64회차 블록 추가, SUBMISSION_RUNBOOK Gate 0 최신 생성 주문을 이번 회차 주문으로 교체. 데모 예시 문장과 $45.50 총액은 변하지 않았다.
+- 작은 단위라 Muse Code 위임 대신 직접 수행했다(종전 회차와 같은 사유).
+
+### 감독 검증 (직접 실행)
+- `npm test` 109/109 통과. 수정 전후 대조: 위 문장들이 각각 머그 12개($144)·캔들 12개·헤드폰 2개($118)·머그 12+캔들 12($306)로 바뀌고, `mugs by the case`는 1개 그대로, 표준 예시 `2 coffee beans and a notebook`은 $45.50 그대로임을 확인.
+- 실제 서버 기동 스모크: `/api/health` 정상(sandbox, credentialsConfigured=true, ai.configured=false), `/api/parse` 신규 문장 머그 12개 $144·표준 예시 $45.50 + `source:{type:"rules"}`, `/api/catalog` 12개 품목, UI 서빙(제목) 정상. 검증용 서버는 종료(포트 닫힘)까지 확인했다.
+- **신규 동작을 실샌드박스로 검증**: 문장(`mugs by the dozen`)만으로 `POST /api/orders` → 실제 샌드박스 주문 생성 성공(주문 2VP19956EF401711U, CREATED), `GET /api/orders/:id` 조회로 PayPal 원응답의 금액 $144.00·수량 12·SKU mug가 일치함을 확인했다. 표준 문장 주문도 재생성했다(주문 1U772818UT393121B, CREATED, $45.50, 상태 조회 CREATED·captureId=null) — 미승인 캡처는 실제 API가 422 `ORDER_NOT_APPROVED`로 거부(앱은 502 upstream_error로 매핑). 승인·캡처를 한 것으로 기록하지 않는다.
+- 빈칸 전수 검사: DEVPOST_COPY에 남은 플레이스홀더는 [SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]·[VIDEO_URL]뿐이며 모두 Gate 0·영상 제작에 묶인 미검증 항목이라 그대로 뒀다. 공개 자료 개인정보·회사 표현 스캔: `.env`·DEVLOG 제외 전체에서 실명·연락처·소속·회사(LS) 표현 0건. 현행 문서의 낡은 테스트 수("106 passing" 등) 잔존 0건(DEMO_SCRIPT의 날짜 박힌 과거 회차 이력 블록은 당시 기록이라 그대로 둠). 제출 이미지 2장(1600x900)은 submission-assets 보관 위치에 그대로 있음을 확인했다.
+- **공개 저장소 동기화 성공**: 스냅샷 푸시 완료 — 커밋 a39b725bda8fa1eebf92686d8da1892814adbeec. 첫 시도는 세션이 완료 전에 사라져 원격 HEAD가 63회차 커밋(5733fec4)에 머문 것을 GitHub 읽기 도구(list_commits)로 확인한 뒤 1회 재시도했고, 재시도 후 원격 HEAD가 이 커밋으로 이동했음을 같은 도구로 직접 확인했다. 단, 이 64회차 로그 항목과 그 직후의 SUBMISSION_RUNBOOK Step 1 HEAD 갱신은 푸시 이후에 쓴 것이라 로컬에만 있으며 다음 푸시에 함께 올라간다.
+
+### 완료로 기록하지 않는 것 (막힌 지점 2건 — 변동 없음)
+1. **구매자 승인 → 캡처 미검증** — 주인님이 브라우저에서 PayPal Developer에 다시 로그인해 주시면 다음 QA 회차가 Sandbox Accounts 구매자 비밀번호 확인(값은 기록하지 않음) → 승인 → 캡처·capture ID 확보 → DEVPOST_COPY 빈칸([SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]) 실측값 기입까지 수행한다. 대안으로 승인 화면에서 주인님이 직접 승인만 해 주셔도 캡처는 API로 마칠 수 있다. 제출 마감 2026-11-13 05:00 KST가 이시가키 귀국(11/13 16:10)보다 먼저이므로, 승인 1건은 11/12 18:00 최종 제출 단계 전까지 풀려야 한다.
+2. **실제 LLM 호출 미검증 (52회차와 동일)** — 이 환경에 LLM API 키가 없어 실제 모델 호출은 아직 검증되지 않았다. 키가 보안 경로로 들어오면 `/api/health`의 ai.configured=true와 실제 문장의 source.type="llm" 실측이 후속 검증이다.
+
+### 다음 회차 제안
+- 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이고, LLM 키가 들어오면 실모델 호출 검증을 함께 수행한다. 둘 다 없으면 데모·문안 카테고리로 진행하되 기능 보강은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
