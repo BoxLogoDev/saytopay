@@ -98,7 +98,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 124 passing) cover the AI step (provider
+- Tests (`npm test`, 127 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -146,7 +146,10 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   supply a count either ("1/2 mugs" drafts one, not two, and
   "1/2 dozen mugs" drafts one, not twenty-four), word-boundary matching so
   "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones, and the standalone synonyms "headset", "tee", and "notepad", which draft the headphones, the t-shirt, and the notebook, and the hyphenated "tee-shirt", which drafts one shirt, not two — "tee" and "shirt" used to match as separate mentions of the same item),
-  explicit negation so "no notebook" never drafts a notebook, and
+  explicit negation so "no notebook" never drafts a notebook, an
+  explicit zero quantity so "zero mugs", "0 mugs", and "mugs: 0"
+  draft none of the item (and a zero mention never cancels a
+  positive one), and
   quantities before an "of the" connector so "two of the mugs"
   drafts two, and quantities before "more" so "two more mugs"
   drafts two while "no more mugs" drafts none), malformed JSON bodies answered as `400 invalid_json`

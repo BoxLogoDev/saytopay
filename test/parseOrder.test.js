@@ -1099,3 +1099,43 @@ test("separate 'tee' and 'shirt' mentions still sum, negation holds, standard ex
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("an explicit zero quantity in front of the item drafts none of it", () => {
+  const word = parseOrderText("zero mugs");
+  assert.equal(word.items.length, 0);
+  assert.equal(word.total, 0);
+  const digit = parseOrderText("0 mugs");
+  assert.equal(digit.items.length, 0);
+  const mixed = parseOrderText("zero coffee beans and a notebook");
+  assert.equal(mixed.items.length, 1);
+  assert.equal(mixed.items[0].sku, "notebook");
+  assert.equal(mixed.total, 9.5);
+  const zeroDozen = parseOrderText("zero dozen mugs");
+  assert.equal(zeroDozen.items.length, 0);
+});
+
+test("a trailing explicit zero drafts none of it", () => {
+  const colon = parseOrderText("mugs: 0");
+  assert.equal(colon.items.length, 0);
+  const colonWord = parseOrderText("mugs: zero");
+  assert.equal(colonWord.items.length, 0);
+  const x = parseOrderText("a mug x0");
+  assert.equal(x.items.length, 0);
+  const dashWord = parseOrderText("mugs - zero");
+  assert.equal(dashWord.items.length, 0);
+});
+
+test("a zero mention adds nothing but never cancels a positive mention, standard example unchanged", () => {
+  const summed = parseOrderText("one mug and zero mugs");
+  assert.equal(summed.items.length, 1);
+  assert.equal(summed.items[0].quantity, 1);
+  assert.equal(summed.total, 12);
+  const after = parseOrderText("zero mugs and two mugs");
+  assert.equal(after.items[0].quantity, 2);
+  const other = parseOrderText("two mugs and zero candles");
+  assert.equal(other.items.length, 1);
+  assert.equal(other.items[0].sku, "mug");
+  assert.equal(other.total, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

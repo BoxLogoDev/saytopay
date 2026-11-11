@@ -1,6 +1,7 @@
 import { CATALOG } from "./catalog.js";
 
 const NUMBER_WORDS = {
+  zero: 0,
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5,
   six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
   thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17,
@@ -18,7 +19,7 @@ const ONES_WORDS = {
   six: 6, seven: 7, eight: 8, nine: 9,
 };
 
-const QUANTITY_TOKEN = String.raw`\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a|an`;
+const QUANTITY_TOKEN = String.raw`\d+|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|a|an`;
 
 // The word-only part of QUANTITY_TOKEN (no \d+ alternative). The
 // trailing-count patterns below pair it with a guarded \d{1,3}: the
@@ -576,6 +577,16 @@ export function parseOrderText(text) {
     // that does not immediately follow the item.
     const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 24));
     let quantity = trailing != null ? trailing : detectQuantity(before);
+    // An explicit zero ("zero mugs", "0 mugs", "mugs: 0", "mugs x0")
+    // is an instruction to draft none of that item, not a missing
+    // quantity: before this, the word "zero" was not a number word
+    // at all and the digit 0 was clamped back up to 1, so every such
+    // mention was charged as one unit — and summed ("one mug and
+    // zero mugs" drafted two). A zero mention claims its span (done
+    // above) and contributes nothing, exactly like a negated
+    // mention; a separate positive mention of the same item in the
+    // same sentence still counts.
+    if (quantity === 0) continue;
     quantity = Math.min(Math.max(quantity, 1), 99);
     // A buyer may mention the same item more than once in one sentence
     // ("a mug and three mugs", "1 coffee and 2 coffee beans"). Sum the

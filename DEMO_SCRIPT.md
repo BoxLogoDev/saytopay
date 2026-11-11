@@ -59,6 +59,55 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-11, 76th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
+  `ai.configured: false` — no LLM key in this environment, so the draft
+  on camera is produced by the rules fallback and the draft note says
+  so), parse ($45.50 for the filmed example, `source: rules`), catalog
+  (12 items), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 127/127. The parser now also honours an explicit
+  zero quantity — "zero mugs", "0 mugs", and "mugs: 0" draft none of
+  the item, where every such mention used to be charged as one unit
+  (and "one mug and zero mugs" summed to two) — verified against the
+  real sandbox (order 81G7447894951322S, CREATED, $9.50, notebook ×1
+  only, from "zero coffee beans and a notebook"; a pure-zero sentence
+  is refused as `400 empty_order` and creates no order at all). Real
+  sandbox order creation for the filmed sentence was re-verified
+  (order 7AR77701GM4453437, CREATED, $45.50, approval URL issued;
+  status lookup returned CREATED with no capture — items coffee-beans
+  ×2 + notebook ×1 — and an unapproved capture was refused by the real
+  API with 422 `ORDER_NOT_APPROVED`, mapped by the app to
+  `upstream_error`) — creation only, not capture. The submission
+  runbook's Gate 0 and placeholder check were refreshed to this cycle.
+  The submission images (cover + flow, 1600x900) are still in place in
+  the submission-assets folder. The owner is traveling in Ishigaki
+  (diving day 3); the approval step still needs the owner's PayPal
+  Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
+## Filming status (2026-11-11, 75th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
+  `ai.configured: false` — no LLM key in this environment, so the draft
+  on camera is produced by the rules fallback and the draft note says
+  so), parse ($45.50 for the filmed example, `source: rules`), catalog
+  (12 items), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 124/124. Real sandbox order creation for the filmed
+  sentence was re-verified (order 0P5557963W0820427, CREATED, $45.50,
+  approval URL issued; status lookup returned CREATED with no capture
+  — items coffee-beans ×2 + notebook ×1 — and an unapproved capture
+  was refused by the real API with 422 `ORDER_NOT_APPROVED`, mapped by
+  the app to `upstream_error`) — creation only, not capture. The
+  submission runbook's Gate 0 and placeholder check were refreshed to
+  this cycle. The submission images (cover + flow, 1600x900) are still
+  in place in the submission-assets folder. The owner is traveling in
+  Ishigaki (diving day 3); the approval step still needs the owner's
+  PayPal Developer sign-in.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-11, 74th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,

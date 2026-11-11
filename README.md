@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (124 tests) covers the AI language step (provider
+The test suite (127 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -120,7 +120,10 @@ three, and "no 1/2 dozen mugs" drafts no mugs — word-boundary matching:
 while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and the hyphenated spelling "tee-shirt" drafts one shirt ($24), where the same word used to match "tee" and "shirt" as two separate mentions and draft two ($48), and "two tee-shirts" drafts two, not three — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
-leaking onto the next item — and an "of the" connector between the
+leaking onto the next item — and an explicit zero quantity: "zero
+mugs", "0 mugs", and "mugs: 0" draft none of the item, and a zero
+mention adds nothing without cancelling a positive mention ("one mug
+and zero mugs" is one mug) — and an "of the" connector between the
 quantity and the item: "two of the mugs" is two mugs and "a dozen of
 the mugs" is twelve — and "more" between a quantity and the item:
 "two more mugs" is two mugs, "a dozen more mugs" is twelve, and
