@@ -40,7 +40,10 @@ headphones" and "a couple of mugs" draft two, and "two pairs" drafts
 four. Container words count too — "3 boxes of candles" drafts three
 and "2 sets of headphones" drafts two, a container with an inner count
 multiplies ("2 boxes of 12 candles" drafts twenty-four), and a container the buyer rules
-out ("no boxes of candles") drafts none. Unit words in the same slot
+out ("no boxes of candles") drafts none, and the further container
+nouns count the same way ("2 bags of coffee beans" drafts two, "2
+jars of candles" drafts two, "2 bags of 6 mugs" drafts twelve, and
+"no bags of coffee beans" drafts none). Unit words in the same slot
 count the same way — "3 pcs of mugs" drafts three, "3 pieces of
 candles" drafts three, and a negated unit phrase ("no pieces of
 candles") drafts none. Quantities said as number words work past
@@ -55,13 +58,17 @@ or dozens ("a dozen mugs" drafts twelve), and a quantity still counts
 when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or when a general descriptive
 adjective does ("2 black headphones" drafts two, "a dozen red
-candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
+candles" drafts twelve, and "no red mugs" drafts no mugs), or when a pattern, style, or size adjective does ("2 striped mugs" drafts two, "two floral candles" drafts two, "a dozen teal mugs" drafts twelve, and "no striped mugs" drafts no mugs), or written after the item in
 shopping-list style ("mugs x3", "mugs 3x", and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one), and a scale phrase counts in every trailing form ("mugs: a hundred" drafts ninety-nine — one hundred, clamped — not one, and "candles: two hundred" drafts ninety-nine, not two). A decimal amount never supplies a count
 either — "1.5 mugs" drafts one, not five, and "1.5 dozen mugs" drafts
 one, not sixty. A slash fraction never supplies a count either —
 "1/2 mugs" drafts one, not two (the denominator), "1/2 dozen mugs"
 drafts one, not twenty-four, and "mugs: 3/4" drafts one, not three.
-Keywords match on word boundaries,
+A thousands separator is part of the number, not a list comma —
+"1,000 candles" drafts ninety-nine (one thousand, clamped), not
+nothing, "mugs: 1,000" drafts ninety-nine, not one, an invalid
+grouping ("12,34 mugs") invents no count, and "no 1,000 mugs"
+drafts none. Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
 ("mugs", "notebooks") still match. An item the buyer explicitly rules
@@ -98,7 +105,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 127 passing) cover the AI step (provider
+- Tests (`npm test`, 142 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -108,7 +115,10 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   four — container words — "3 boxes of candles" drafts three, a
   container with an inner count multiplies ("2 boxes of 12 candles"
   drafts twenty-four), and a
-  negated container drafts none — unit words in the same slot —
+  negated container drafts none, and the further container nouns
+  (bags, jars, crates, sacks, pouches, tins) — "2 bags of coffee
+  beans" drafts two, "2 bags of 6 mugs" drafts twelve, and a
+  negated one drafts none — unit words in the same slot —
   "3 pcs of mugs" drafts three, "3 pieces of candles" drafts three,
   a unit word with an inner count multiplies ("2 pieces of 12
   candles" drafts twenty-four), and a negated unit phrase drafts
@@ -119,10 +129,13 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   ninety-nine — summing
   repeated mentions of the same item in one sentence, dozen
   quantities — "a dozen mugs" drafts twelve, "half-dozen" drafts
-  six and "two-dozen" drafts twenty-four — quantities stated
+  six and "two-dozen" drafts twenty-four, and a dozen and a half
+  ("a dozen and a half mugs", "one and a half dozen mugs") drafts
+  eighteen in front of and after the item — quantities stated
   before a catalog adjective and before a general descriptive
   adjective ("2 black headphones" drafts two, "no red mugs" drafts
-  none), trailing counts after the item
+  none) and before a pattern, style, or size adjective ("2 striped
+  mugs" drafts two, "no striped mugs" drafts none), trailing counts after the item
   ("mugs x3", list-style "mugs: 3" and "mugs (3)", the number-times
   forms "mugs 3x" and "mugs: 3x", and the bare, dash,
   bracket, and equals shorthands "mugs 3", "mugs - 3", "mugs [3]", and
@@ -137,14 +150,21 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   twenty-four, and "headphones: a pair" drafts two — and the
   "by the …" unit idiom after the item — "mugs by the dozen" drafts
   twelve and "headphones by the pair" drafts two, while an unsized
-  unit ("mugs by the case") invents nothing — and scale counts
+  unit ("mugs by the case") invents nothing — and pack-size notes
+  after the item — "mugs (pack of 6)" drafts six and "candles:
+  box of 12" drafts twelve — and scale counts
   in every trailing form — "mugs: a hundred" and "candles: two
   hundred" draft ninety-nine (the scaled quantity, clamped), and
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
   never supply a count ("1.5 mugs" drafts one, not five, and
   "1.5 dozen mugs" drafts one, not sixty), slash fractions that never
   supply a count either ("1/2 mugs" drafts one, not two, and
-  "1/2 dozen mugs" drafts one, not twenty-four), word-boundary matching so
+  "1/2 dozen mugs" drafts one, not twenty-four), thousands separators
+  that are part of the number, not a list comma ("1,000 candles"
+  drafts ninety-nine — one thousand, clamped — not nothing, and
+  "mugs: 1,000" drafts ninety-nine, not one, while an invalid
+  grouping such as "12,34 mugs" invents no count, and "no 1,000
+  mugs" drafts none), word-boundary matching so
   "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones, and the standalone synonyms "headset", "tee", and "notepad", which draft the headphones, the t-shirt, and the notebook, and the hyphenated "tee-shirt", which drafts one shirt, not two — "tee" and "shirt" used to match as separate mentions of the same item),
   explicit negation so "no notebook" never drafts a notebook, an
   explicit zero quantity so "zero mugs", "0 mugs", and "mugs: 0"

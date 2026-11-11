@@ -57,6 +57,12 @@ function quantityValue(token) {
 // recognised negation filler either. Because this set feeds both the
 // quantity lookup and NEGATION_FILLER below, one list keeps the two
 // readings in agreement.
+// The set also covers pattern, style, and size adjectives buyers use
+// the same way ("2 striped mugs", "two floral candles", "a dozen
+// teal mugs", "2 polka dot mugs", "2 vintage mugs"): before they were
+// listed, each of those silently drafted a quantity of 1 as well,
+// and "no striped mugs" was drafted at all because "striped" was not
+// recognised negation filler either.
 const FILLER_WORDS = new Set([
   "wireless", "steel", "ceramic", "paper", "paperback", "cotton",
   "mechanical", "canvas", "scented", "large", "small", "fresh",
@@ -67,6 +73,14 @@ const FILLER_WORDS = new Set([
   "new", "old", "big", "hot", "cold", "warm", "soft", "round",
   "square", "reusable", "portable", "electric", "digital",
   "handmade", "organic", "instant",
+  "teal", "beige", "ivory", "navy", "maroon", "olive", "turquoise",
+  "coral", "lavender", "magenta", "cyan", "khaki", "crimson",
+  "emerald", "striped", "floral", "plaid", "checked", "checkered",
+  "dotted", "patterned", "printed", "polka", "dot", "vintage",
+  "mini", "oversized", "jumbo", "tiny", "giant", "classic",
+  "modern", "rustic", "matte", "glossy", "transparent", "slim",
+  "thick", "thin", "lightweight", "compact", "foldable",
+  "insulated", "waterproof",
 ]);
 
 // Quantity may also be written after the item, shopping-list style:
@@ -189,7 +203,17 @@ function detectTrailingQuantity(afterRaw) {
   const after = String(afterRaw || "")
     .replace(/\d+\.\d+/g, " decimal ")
     .replace(/\d+\s*\/\s*\d+\s+(?:dozen|hundred|thousand)\b/g, " fractiongroup ")
-    .replace(/\d+\s*\/\s*\d+/g, " fraction ");
+    .replace(/\d+\s*\/\s*\d+/g, " fraction ")
+    // A thousands separator is part of the number, not a list
+    // comma: "mugs: 1,000" is a thousand mugs (clamped to 99 by
+    // the caller), not one. Before this, the guarded digit
+    // patterns below read only the "1" before the comma. Valid
+    // groupings are read by a dedicated block below (a plain
+    // longer number behind the same delimiters still invents
+    // nothing, exactly as before); a comma between digits that
+    // is not a valid grouping ("mugs: 12,34") is neutralised
+    // here instead, so its tail can never be read as a count.
+    .replace(/(^|\D)(?!\d{1,3}(?:,\d{3})+(?!\d))\d+,\d+\b/g, "$1 commanum ");
   // The "by the …" unit idiom names the quantity the item is sold
   // in: "mugs by the dozen" is twelve mugs and "headphones by the
   // pair" is two. Before this, the idiom was ignored and every such
@@ -198,6 +222,48 @@ function detectTrailingQuantity(afterRaw) {
   // invent nothing, because a case holds no fixed number.
   const byUnit = after.match(/^\s+by\s+the\s+(dozen|pairs?|couples?)\b/);
   if (byUnit) return byUnit[1] === "dozen" ? 12 : 2;
+  // A pack-size note written after the item names the quantity:
+  // "mugs (pack of 6)", "candles: box of 12", "mugs [set of 4]".
+  // Before this, the note was ignored and every such mention
+  // silently drafted a quantity of 1, even though the same words
+  // in front of the item ("pack of 6 mugs") already counted. The
+  // container word is required — a bare "of 6" invents nothing.
+  const PACK_COUNT = `(?:\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN}|(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN}))`;
+  const PACK_SIZE = `(?:packs?|box(?:es)?|sets?|cases?|bundles?|cartons?|bags?|jars?|crates?|sacks?|pouch(?:es)?|tins?)\\s+of\\s+(${PACK_COUNT})`;
+  const packForms = [
+    new RegExp(`^\\s*\\(\\s*${PACK_SIZE}\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*${PACK_SIZE}\\s*\\]`),
+    new RegExp(`^\\s*:\\s*${PACK_SIZE}\\b`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*${PACK_SIZE}\\b`),
+    new RegExp(`^\\s*=\\s*${PACK_SIZE}\\b`),
+    new RegExp(`^\\s+${PACK_SIZE}\\b`),
+    new RegExp(`^\\s*,\\s*${PACK_SIZE}\\b(?:\\s+please\\b|\\s*[.!?;]|\\s*$)`),
+  ];
+  for (const re of packForms) {
+    const pm = after.match(re);
+    if (pm) return countPhraseValue(pm[1].replace(/-/g, " "));
+  }
+  // Thousands-grouped numbers behind an explicit delimiter or
+  // an x read as the full number (clamped by the caller): the
+  // guarded \d{1,3} patterns below refuse every longer digit
+  // run, but a comma grouping is unambiguous — exactly like the
+  // trailing scale phrases, which also clamp. A plain longer
+  // number ("mugs 2026x", "mugs = 2026") still invents nothing.
+  const GROUPED = String.raw`\d{1,3}(?:,\d{3})+`;
+  const groupedForms = [
+    new RegExp(`^\\s*[x×]\\s*(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s+(${GROUPED})(?!\\d)x(?![a-z])`),
+    new RegExp(`^\\s*:\\s*(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${GROUPED})\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${GROUPED})\\s*\\]`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s*,\\s*(${GROUPED})(?!\\d)(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`),
+  ];
+  for (const re of groupedForms) {
+    const g = after.match(re);
+    if (g) return parseInt(g[1].replace(/,/g, ""), 10);
+  }
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
   // The multiplier can also be written after its number: "mugs 3x",
@@ -254,6 +320,27 @@ function detectTrailingQuantity(afterRaw) {
   if (equalsScale) return scalePhraseValue(equalsScale[1]);
   const commaScale = after.match(new RegExp(`^\\s*,\\s*(${SCALE_PHRASE})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaScale) return scalePhraseValue(commaScale[1]);
+  // "A dozen and a half" written after the item is eighteen, in
+  // every delimiter form, and "one and a half dozen" after the item
+  // is the same eighteen: "mugs: a dozen and a half", "candles (two
+  // dozen and a half)", "mugs, a dozen and a half of them". Before
+  // this, the dozen patterns below read only the dozen part
+  // ("mugs: a dozen and a half" drafted twelve) or nothing at all
+  // (the parenthesised form drafted one).
+  const DAH_COUNT = `(?:(\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN})[-\\s]+)?dozen[-\\s]+and[-\\s]+a[-\\s]+half`;
+  const AHD_COUNT = `(\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN})[-\\s]+and[-\\s]+a[-\\s]+half[-\\s]+dozen`;
+  const dahForms = [
+    new RegExp(`^\\s*:\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\b`),
+    new RegExp(`^\\s*\\(\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\s*\\]`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\b`),
+    new RegExp(`^\\s*=\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\b`),
+    new RegExp(`^\\s*,\\s*(?:${DAH_COUNT}|${AHD_COUNT})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`),
+  ];
+  for (const re of dahForms) {
+    const dm = after.match(re);
+    if (dm) return quantityValue(dm[1] ?? dm[2]) * 12 + 6;
+  }
   // Dozen and pair phrases come before the single-word patterns
   // below: those would read only the count word ("candles: two
   // dozen" drafted two) or just the article ("candles: a dozen"
@@ -309,6 +396,18 @@ function stripFillerWords(before) {
 const CONTAINER_WORDS = [
   "box", "boxes", "pack", "packs", "set", "sets",
   "case", "cases", "bundle", "bundles", "carton", "cartons",
+  // Further container nouns buyers use in the same slot — "2 bags
+  // of coffee beans", "2 jars of candles", "2 crates of mugs",
+  // "2 sacks of coffee beans", "2 pouches of coffee beans", "2
+  // tins of candles". None of them is a catalog keyword, so each
+  // can only ever be the packaging an item comes in: before they
+  // were recognised, every such sentence silently drafted a
+  // quantity of 1, a negated one ("no bags of coffee beans") was
+  // drafted at all because the words were not recognised negation
+  // filler either, and a container with an inner count ("2 bags
+  // of 6 mugs") read only the inner count.
+  "bag", "bags", "jar", "jars", "crate", "crates",
+  "sack", "sacks", "pouch", "pouches", "tin", "tins",
   // Unit words buyers put in the same slot as a container — "3 pcs
   // of mugs", "3 pieces of candles", "3 units of mugs". They are
   // not catalog items either, so the same skip applies: before
@@ -347,7 +446,7 @@ function detectContainerInnerQuantity(before) {
   const filler = [...FILLER_WORDS].join("|");
   const m = before.match(
     new RegExp(
-      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${filler})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?)\\s+of\\s+(${COUNT_PHRASE})\\s*$`,
+      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${filler})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?|bags?|jars?|crates?|sacks?|pouch(?:es)?|tins?)\\s+of\\s+(${COUNT_PHRASE})\\s*$`,
     ),
   );
   if (!m) return null;
@@ -386,11 +485,26 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // and the dozen/scale guard below refuses a fraction directly in
   // front of one of those words outright, exactly like a decimal.
   before = before.replace(/\d+\s*\/\s*\d+/g, " fraction ");
+  // A thousands separator is part of the number: "1,000 candles"
+  // is a thousand candles (clamped to 99 by the caller). Before
+  // this, the digit rules below read only the tail after the
+  // comma — "1,000" became the explicit zero "000", so the item
+  // was dropped entirely, "100,000 candles" drafted nothing, and
+  // "12,34 mugs" drafted thirty-four. Valid groupings (\d{1,3}
+  // then groups of three) are joined into plain digits here; a
+  // comma between digits that is not a valid grouping ("1,5",
+  // "12,34", "1,00") is neutralised like a decimal, so its tail
+  // can never be read as a count, and the dozen/scale guard below
+  // refuses it in front of those words outright.
+  before = before.replace(/\b\d{1,3}(?:,\d{3})+(?!\d)/g, (m) => m.replace(/,/g, ""));
+  before = before.replace(/\b\d+,\d+\b/g, " commanum ");
   if (
     /(?:^|\s)decimal\s+dozen\b/.test(before) ||
     /(?:^|\s)decimal\s+(?:hundred|thousand)\b/.test(before) ||
     /(?:^|\s)fraction\s+dozen\b/.test(before) ||
-    /(?:^|\s)fraction\s+(?:hundred|thousand)\b/.test(before)
+    /(?:^|\s)fraction\s+(?:hundred|thousand)\b/.test(before) ||
+    /(?:^|\s)commanum\s+dozen\b/.test(before) ||
+    /(?:^|\s)commanum\s+(?:hundred|thousand)\b/.test(before)
   ) {
     return 1;
   }
@@ -410,7 +524,7 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   if (connector) before = before.slice(0, before.length - connector[0].length);
   // Skip one trailing container word ("3 boxes of …" → "3"), then any
   // catalog adjective that sat in front of it ("2 large boxes of …").
-  const container = before.match(/\b(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?)\s*$/);
+  const container = before.match(/\b(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?|bags?|jars?|crates?|sacks?|pouch(?:es)?|tins?)\s*$/);
   if (container) before = stripFillerWords(before.slice(0, before.length - container[0].length));
   // "More" between a quantity and its item: "two more mugs", "3 more
   // candles", "a dozen more mugs", "two more of the mugs". Before
@@ -420,6 +534,19 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // "more mugs" still drafts 1 — "more" alone invents no quantity.
   const more = before.match(/\bmore\s*$/);
   if (more) before = stripFillerWords(before.slice(0, before.length - more[0].length));
+  // "A dozen and a half" is eighteen — a dozen plus a half dozen —
+  // and "one and a half dozen" is the same eighteen said the other
+  // way round. Before these were read, the first form silently
+  // drafted one (no rule below matches a phrase ending in "half")
+  // and the second drafted six (the half-dozen rule below matched
+  // its tail). Both are "<count> dozen plus six", with a bare
+  // "dozen and a half" counting its dozen as one. These checks run
+  // before the half-dozen rule so the tail of the second form can
+  // never be read on its own.
+  const dozenAndHalf = before.match(new RegExp(`(?:^|\\s)(?:(${QUANTITY_TOKEN})\\s+)?dozen\\s+and\\s+a\\s+half\\s*(?:of\\s*)?$`));
+  if (dozenAndHalf) return quantityValue(dozenAndHalf[1]) * 12 + 6;
+  const andHalfDozen = before.match(new RegExp(`(?:^|\\s)(${QUANTITY_TOKEN})\\s+and\\s+a\\s+half\\s+dozen\\s*(?:of\\s*)?$`));
+  if (andHalfDozen) return quantityValue(andHalfDozen[1]) * 12 + 6;
   const halfDozen = before.match(/half\s+(?:a\s+)?dozen\s*(?:of\s*)?$/);
   if (halfDozen) return 6;
   // "A couple of dozen mugs" is two dozen — 24, not 12. The generic
@@ -484,13 +611,18 @@ const NEGATION_FILLER = new Set([
 ]);
 
 function isNegatedMention(input, hitStart) {
-  const clauseStart = Math.max(
-    input.lastIndexOf(",", hitStart - 1),
-    input.lastIndexOf(";", hitStart - 1),
-    input.lastIndexOf(".", hitStart - 1),
-    input.lastIndexOf("!", hitStart - 1),
-    input.lastIndexOf("?", hitStart - 1),
-  ) + 1;
+  // The clause starts after the last separator before the mention
+  // — except a comma flanked by digits, which is a thousands
+  // separator inside a number ("no 1,000 mugs"), not a clause
+  // break: treating it as one hid the "no" and drafted the item
+  // the buyer had just ruled out.
+  let clauseStart = 0;
+  for (let i = 0; i < hitStart; i += 1) {
+    const ch = input[i];
+    if (!",;.!?".includes(ch)) continue;
+    if (ch === "," && /\d/.test(input[i - 1] || "") && /\d/.test(input[i + 1] || "")) continue;
+    clauseStart = i + 1;
+  }
   const before = input.slice(clauseStart, hitStart).trim();
   const cue = before.match(/(?:^|\s)(no|not|without|never|don't|dont|do not|exclude|remove)(?:\s+(.+))?$/);
   if (!cue) return false;
@@ -499,7 +631,7 @@ function isNegatedMention(input, hitStart) {
   // mugs") is quantity phrasing, not a new item: before it was
   // allowed here, the fraction broke the negation and the item the
   // buyer excluded was drafted after all.
-  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+\/\d+$/.test(w));
+  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+\/\d+$/.test(w) || /^\d{1,3}(?:,\d{3})*$/.test(w) || /^\d+,\d+$/.test(w));
 }
 
 function money(n) {
@@ -571,11 +703,12 @@ export function parseOrderText(text) {
     const before = input.slice(Math.max(0, hit.start - 48), hit.start);
     // A trailing "xN" count is written for this exact mention, so it
     // takes precedence over any quantity word before the item. The
-    // window is 24 chars so a full comma form ("…, three of them")
-    // still fits after its item; every trailing pattern is anchored
-    // to the start of the window, so a longer window matches nothing
-    // that does not immediately follow the item.
-    const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 24));
+    // window is 40 chars so a full comma form ("…, three of them")
+    // and the longest trailing phrase ("…, two dozen and a half of
+    // them", 30 chars) still fit after their item; every trailing
+    // pattern is anchored to the start of the window, so a longer
+    // window matches nothing that does not immediately follow the item.
+    const trailing = detectTrailingQuantity(input.slice(hit.end, hit.end + 40));
     let quantity = trailing != null ? trailing : detectQuantity(before);
     // An explicit zero ("zero mugs", "0 mugs", "mugs: 0", "mugs x0")
     // is an instruction to draft none of that item, not a missing

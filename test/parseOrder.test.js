@@ -76,6 +76,56 @@ test("parses half a dozen as six", () => {
   assert.equal(d.total, 72);
 });
 
+test("a dozen and a half drafts eighteen, not one", () => {
+  for (const [text, qty] of [
+    ["a dozen and a half mugs", 18],
+    ["dozen and a half mugs", 18],
+    ["one dozen and a half mugs", 18],
+    ["two dozen and a half mugs", 30],
+    ["a dozen and a half ceramic mugs", 18],
+  ]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].quantity, qty, text);
+    assert.equal(d.total, qty * 12, text);
+  }
+  const candles = parseOrderText("two dozen and a half candles");
+  assert.equal(candles.items[0].quantity, 30);
+  assert.equal(candles.total, 30 * 13.5);
+});
+
+test("one and a half dozen drafts eighteen, not six", () => {
+  const d = parseOrderText("one and a half dozen mugs");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].quantity, 18);
+  assert.equal(d.total, 216);
+  const two = parseOrderText("two and a half dozen mugs");
+  assert.equal(two.items[0].quantity, 30);
+  assert.equal(two.total, 360);
+});
+
+test("trailing dozen-and-a-half counts are read, negation and standard example unchanged", () => {
+  for (const [text, qty] of [
+    ["mugs: a dozen and a half", 18],
+    ["mugs: two dozen and a half", 30],
+    ["candles (a dozen and a half)", 18],
+    ["mugs, a dozen and a half of them", 18],
+    ["mugs, two dozen and a half of them", 30],
+    ["mugs: one and a half dozen", 18],
+    ["candles (two and a half dozen)", 30],
+    ["mugs - a dozen and a half", 18],
+  ]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].quantity, qty, text);
+  }
+  const neg = parseOrderText("no a dozen and a half mugs, just a candle");
+  assert.equal(neg.items.length, 1);
+  assert.equal(neg.items[0].sku, "candle");
+  const std = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(std.total, 45.5);
+});
+
 test("quantity survives a catalog adjective before the item", () => {
   const d = parseOrderText("2 wireless headphones and 1 ceramic mug");
   assert.equal(d.items.find((i) => i.sku === "headphones").quantity, 2);
@@ -592,6 +642,53 @@ test("negation still covers container phrasing", () => {
   assert.equal(standard.total, 45.5);
 });
 
+test("further container nouns (bags, jars, crates, sacks, pouches, tins) draft that many of the item", () => {
+  const bags = parseOrderText("2 bags of coffee beans");
+  assert.equal(bags.items.length, 1);
+  assert.equal(bags.items[0].sku, "coffee-beans");
+  assert.equal(bags.items[0].quantity, 2);
+  assert.equal(bags.total, 36);
+  const jars = parseOrderText("2 jars of candles");
+  assert.equal(jars.items[0].quantity, 2);
+  assert.equal(jars.total, 27);
+  const crates = parseOrderText("3 crates of mugs");
+  assert.equal(crates.items[0].quantity, 3);
+  assert.equal(crates.total, 36);
+  const words = parseOrderText("three sacks of coffee beans");
+  assert.equal(words.items[0].quantity, 3);
+  const pouches = parseOrderText("2 pouches of coffee beans and a notebook");
+  assert.equal(pouches.items.find((i) => i.sku === "coffee-beans").quantity, 2);
+  assert.equal(pouches.items.find((i) => i.sku === "notebook").quantity, 1);
+  const tins = parseOrderText("2 tins of candles");
+  assert.equal(tins.items[0].quantity, 2);
+});
+
+test("a further container with an inner count multiplies, and a trailing size note with one counts", () => {
+  const bags = parseOrderText("2 bags of 6 mugs");
+  assert.equal(bags.items.length, 1);
+  assert.equal(bags.items[0].sku, "mug");
+  assert.equal(bags.items[0].quantity, 12);
+  assert.equal(bags.total, 144);
+  const trailing = parseOrderText("coffee beans (bag of 2)");
+  assert.equal(trailing.items[0].sku, "coffee-beans");
+  assert.equal(trailing.items[0].quantity, 2);
+  const alone = parseOrderText("a jar of candles");
+  assert.equal(alone.items[0].quantity, 1);
+  assert.equal(alone.total, 13.5);
+});
+
+test("negation covers further container nouns, standard example unchanged", () => {
+  const d = parseOrderText("no bags of coffee beans, just a notebook");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "notebook");
+  assert.equal(d.total, 9.5);
+  const jars = parseOrderText("no jars of candles, just a mug");
+  assert.equal(jars.items.length, 1);
+  assert.equal(jars.items[0].sku, "mug");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("scale words draft the scaled quantity, clamped to 99", () => {
   const hundred = parseOrderText("a hundred notebooks");
   assert.equal(hundred.items.length, 1);
@@ -1066,6 +1163,53 @@ test("trailing slash fractions invent nothing, fraction negation holds, standard
   assert.equal(standard.total, 45.5);
 });
 
+test("a thousands separator in front of the item reads the full number, clamped", () => {
+  const thousand = parseOrderText("1,000 candles");
+  assert.equal(thousand.items.length, 1);
+  assert.equal(thousand.items[0].quantity, 99);
+  assert.equal(thousand.total, 1336.5);
+  const hundredThousand = parseOrderText("100,000 candles");
+  assert.equal(hundredThousand.items[0].quantity, 99);
+  const mixed = parseOrderText("1,000 mugs and 2 notebooks");
+  assert.equal(mixed.items.length, 2);
+  assert.equal(mixed.items.find((i) => i.sku === "mug").quantity, 99);
+  assert.equal(mixed.items.find((i) => i.sku === "notebook").quantity, 2);
+  const dozen = parseOrderText("1,000 dozen mugs");
+  assert.equal(dozen.items[0].quantity, 99);
+});
+
+test("a comma between digits that is not a thousands grouping invents no count", () => {
+  const shortTail = parseOrderText("1,5 mugs");
+  assert.equal(shortTail.items[0].quantity, 1);
+  assert.equal(shortTail.total, 12);
+  const twoDigitTail = parseOrderText("12,34 mugs");
+  assert.equal(twoDigitTail.items[0].quantity, 1);
+  const zeroTail = parseOrderText("1,00 mugs");
+  assert.equal(zeroTail.items.length, 1);
+  assert.equal(zeroTail.items[0].quantity, 1);
+  const dozen = parseOrderText("1,5 dozen mugs");
+  assert.equal(dozen.items[0].quantity, 1);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("trailing thousands separators read the full number, and negation covers them", () => {
+  const colon = parseOrderText("mugs: 1,000");
+  assert.equal(colon.items[0].quantity, 99);
+  const paren = parseOrderText("mugs (1,000)");
+  assert.equal(paren.items[0].quantity, 99);
+  const comma = parseOrderText("mugs, 1,000 of them");
+  assert.equal(comma.items[0].quantity, 99);
+  const x = parseOrderText("candles x1,000");
+  assert.equal(x.items[0].quantity, 99);
+  const negated = parseOrderText("no 1,000 mugs, just 2 candles");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  assert.equal(negated.items[0].quantity, 2);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("the hyphenated 'tee-shirt' drafts one shirt, not tee plus shirt", () => {
   const single = parseOrderText("a tee-shirt");
   assert.equal(single.items.length, 1);
@@ -1136,6 +1280,79 @@ test("a zero mention adds nothing but never cancels a positive mention, standard
   assert.equal(other.items.length, 1);
   assert.equal(other.items[0].sku, "mug");
   assert.equal(other.total, 24);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("a pattern, colour, or style adjective does not hide the quantity", () => {
+  const striped = parseOrderText("2 striped mugs");
+  assert.equal(striped.items.length, 1);
+  assert.equal(striped.items[0].quantity, 2);
+  assert.equal(striped.total, 24);
+  const floral = parseOrderText("two floral candles");
+  assert.equal(floral.items[0].quantity, 2);
+  assert.equal(floral.total, 27);
+  const dozen = parseOrderText("a dozen teal mugs");
+  assert.equal(dozen.items[0].quantity, 12);
+  assert.equal(dozen.total, 144);
+  const vintage = parseOrderText("2 vintage mugs");
+  assert.equal(vintage.items[0].quantity, 2);
+});
+
+test("stacked descriptive adjectives still expose the quantity", () => {
+  const stacked = parseOrderText("2 large striped mugs");
+  assert.equal(stacked.items[0].quantity, 2);
+  assert.equal(stacked.total, 24);
+  const catalogPlusPattern = parseOrderText("3 ceramic striped mugs");
+  assert.equal(catalogPlusPattern.items[0].quantity, 3);
+  assert.equal(catalogPlusPattern.total, 36);
+  const polkaDot = parseOrderText("2 polka dot mugs");
+  assert.equal(polkaDot.items[0].quantity, 2);
+  assert.equal(polkaDot.total, 24);
+});
+
+test("negation covers pattern adjectives, standard example unchanged", () => {
+  const negated = parseOrderText("no striped mugs, just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  assert.equal(negated.total, 13.5);
+  const negatedColour = parseOrderText("no teal mugs, just a notebook");
+  assert.equal(negatedColour.items.length, 1);
+  assert.equal(negatedColour.items[0].sku, "notebook");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("a trailing pack-size note supplies the quantity", () => {
+  const paren = parseOrderText("mugs (pack of 6)");
+  assert.equal(paren.items[0].quantity, 6);
+  assert.equal(paren.total, 72);
+  const colon = parseOrderText("mugs: pack of 6");
+  assert.equal(colon.items[0].quantity, 6);
+  const box = parseOrderText("candles (box of 12)");
+  assert.equal(box.items[0].quantity, 12);
+  assert.equal(box.total, 162);
+  const word = parseOrderText("mugs (pack of six)");
+  assert.equal(word.items[0].quantity, 6);
+});
+
+test("a trailing pack size binds to its own item only", () => {
+  const mixed = parseOrderText("notebooks (pack of 3) and a mug");
+  assert.equal(mixed.items[0].quantity, 3);
+  assert.equal(mixed.items[1].quantity, 1);
+  assert.equal(mixed.total, 40.5);
+  const both = parseOrderText("mugs (pack of 6) and candles (pack of 2)");
+  assert.equal(both.items[0].quantity, 6);
+  assert.equal(both.items[1].quantity, 2);
+  assert.equal(both.total, 99);
+});
+
+test("pack-size note without a container invents nothing, negation and standard example unchanged", () => {
+  const negated = parseOrderText("no mugs (pack of 6), just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  const front = parseOrderText("pack of 6 mugs");
+  assert.equal(front.items[0].quantity, 6);
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });

@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 76th cycle (2026-11-11) creation
-is verified again (order 7AR77701GM4453437, CREATED, $45.50,
+alone does not clear this gate. As of the 86th cycle (2026-11-12) creation
+is verified again (order 50V66516GU847402P, CREATED, $45.50,
 coffee-beans ×2 + notebook ×1 from the filmed sentence
 "2 coffee beans and a notebook"; status
 lookup returned CREATED with no capture and an
@@ -28,17 +28,21 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the commit f0da5612998c022d610ac40f647a254057a28357
-  ("SayToPay QA cycle 74", confirmed with the GitHub read tool
-  `list_commits` in the 74th cycle; the 73rd-cycle edits and the
-  74th-cycle code, tests, documents, and DEVLOG entry are reflected;
-  the 74th-cycle DEVLOG sync note, this Step 1 HEAD refresh, and the
-  75th- and 76th-cycle runbook/script edits are local until the next push — the
-  58th cycle has no DEVLOG entry of its own; see the supplement note
-  recorded in the 59th cycle).
+- Remote HEAD is the commit 896d3436a62bb851808c6444352186b80b11215e
+  ("SayToPay QA cycle 76", confirmed with the GitHub read tool
+  `list_commits` in the 76th cycle; the 75th-cycle edits and the
+  76th-cycle code, tests, documents, and DEVLOG entry are reflected;
+  the 76th-cycle DEVLOG sync note, this Step 1 HEAD refresh, and the
+  77th-, 78th-, 79th-, 80th-, 81st-, 82nd-, 83rd-, 84th-, 85th-, and 86th-cycle edits are
+  local until the next push — the
+  58th cycle has no DEVLOG entry of its own (see the supplement note
+  recorded in the 59th cycle), and the 78th cycle's DEVLOG entry is
+  likewise missing (see the supplement note recorded in the 79th
+  cycle); its work is evidenced by the 78th-cycle blocks in
+  `DEMO_SCRIPT.md` and this runbook).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  127-test suite.
+  142-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -46,7 +50,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 76th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 86th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
