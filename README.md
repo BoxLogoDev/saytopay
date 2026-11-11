@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (112 tests) covers the AI language step (provider
+The test suite (118 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -65,7 +65,11 @@ mugs" drafts twenty-four — container words: "3 boxes of candles"
 drafts three, "2 sets of headphones" drafts two, a container with an
 inner count multiplies ("2 boxes of 12 candles" drafts twenty-four),
 and a negated
-container ("no boxes of candles") drafts none — number words above twelve — "twenty notebooks" is twenty
+container ("no boxes of candles") drafts none — unit words in the
+same slot count the same way: "3 pcs of mugs" drafts three, "3 pieces
+of candles" drafts three, a unit word with an inner count multiplies
+("2 pieces of 12 candles" drafts twenty-four), and a negated unit
+phrase ("no pieces of candles") drafts none — number words above twelve — "twenty notebooks" is twenty
 notebooks and "twenty-one mugs" is twenty-one, not one — scale words:
 "a hundred notebooks" and "a thousand candles" draft the scaled
 quantity (clamped to ninety-nine), not one, and "a hundred and five
@@ -110,7 +114,7 @@ count (the catalog sells whole units): "1.5 mugs" drafts one mug, not
 five, "1.25 mugs" drafts one, not twenty-five, and "1.5 dozen mugs"
 drafts one, not sixty — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
-while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and explicit
+while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
 leaking onto the next item — and an "of the" connector between the

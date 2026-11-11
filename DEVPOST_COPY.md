@@ -40,7 +40,10 @@ headphones" and "a couple of mugs" draft two, and "two pairs" drafts
 four. Container words count too — "3 boxes of candles" drafts three
 and "2 sets of headphones" drafts two, a container with an inner count
 multiplies ("2 boxes of 12 candles" drafts twenty-four), and a container the buyer rules
-out ("no boxes of candles") drafts none. Quantities said as number words work past
+out ("no boxes of candles") drafts none. Unit words in the same slot
+count the same way — "3 pcs of mugs" drafts three, "3 pieces of
+candles" drafts three, and a negated unit phrase ("no pieces of
+candles") drafts none. Quantities said as number words work past
 twelve too — "twenty notebooks" drafts twenty and "twenty-one mugs"
 drafts twenty-one, not one. Scale words count too — "a hundred
 notebooks" and "a thousand candles" draft the scaled quantity
@@ -92,7 +95,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 112 passing) cover the AI step (provider
+- Tests (`npm test`, 118 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -102,7 +105,11 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   four — container words — "3 boxes of candles" drafts three, a
   container with an inner count multiplies ("2 boxes of 12 candles"
   drafts twenty-four), and a
-  negated container drafts none — number
+  negated container drafts none — unit words in the same slot —
+  "3 pcs of mugs" drafts three, "3 pieces of candles" drafts three,
+  a unit word with an inner count multiplies ("2 pieces of 12
+  candles" drafts twenty-four), and a negated unit phrase drafts
+  none — number
   words above twelve and compound tens — "twenty notebooks" drafts
   twenty, "twenty-one mugs" drafts twenty-one — scale words —
   "a hundred notebooks" drafts the scaled quantity, clamped to
@@ -133,7 +140,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
   never supply a count ("1.5 mugs" drafts one, not five, and
   "1.5 dozen mugs" drafts one, not sixty), word-boundary matching so
-  "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones),
+  "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones, and the standalone synonyms "headset", "tee", and "notepad", which draft the headphones, the t-shirt, and the notebook),
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
   drafts two, and quantities before "more" so "two more mugs"

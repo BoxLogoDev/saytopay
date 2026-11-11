@@ -297,6 +297,14 @@ function stripFillerWords(before) {
 const CONTAINER_WORDS = [
   "box", "boxes", "pack", "packs", "set", "sets",
   "case", "cases", "bundle", "bundles", "carton", "cartons",
+  // Unit words buyers put in the same slot as a container — "3 pcs
+  // of mugs", "3 pieces of candles", "3 units of mugs". They are
+  // not catalog items either, so the same skip applies: before
+  // they were recognised, the unit word hid the quantity and every
+  // such sentence silently drafted a quantity of 1, and a negated
+  // unit phrase ("no pieces of candles") was drafted at all
+  // because the unit words were not recognised negation filler.
+  "piece", "pieces", "pc", "pcs", "unit", "units",
 ];
 
 // A quantity phrase for the container rules below: a digit count, a
@@ -327,7 +335,7 @@ function detectContainerInnerQuantity(before) {
   const filler = [...FILLER_WORDS].join("|");
   const m = before.match(
     new RegExp(
-      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${filler})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?)\\s+of\\s+(${COUNT_PHRASE})\\s*$`,
+      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${filler})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?)\\s+of\\s+(${COUNT_PHRASE})\\s*$`,
     ),
   );
   if (!m) return null;
@@ -378,7 +386,7 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   if (connector) before = before.slice(0, before.length - connector[0].length);
   // Skip one trailing container word ("3 boxes of …" → "3"), then any
   // catalog adjective that sat in front of it ("2 large boxes of …").
-  const container = before.match(/\b(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?)\s*$/);
+  const container = before.match(/\b(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?)\s*$/);
   if (container) before = stripFillerWords(before.slice(0, before.length - container[0].length));
   // "More" between a quantity and its item: "two more mugs", "3 more
   // candles", "a dozen more mugs", "two more of the mugs". Before

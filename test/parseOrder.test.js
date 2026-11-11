@@ -954,3 +954,77 @@ test("a negated 'earbud' drafts none, and the standard example is unchanged", ()
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("standalone synonyms match their items, with quantities", () => {
+  assert.equal(parseOrderText("a headset").items[0].sku, "headphones");
+  assert.equal(parseOrderText("a headset").total, 59);
+  assert.equal(parseOrderText("two headsets and a notebook").total, 127.5);
+  assert.equal(parseOrderText("a tee").items[0].sku, "tshirt");
+  assert.equal(parseOrderText("two tees").items[0].quantity, 2);
+  assert.equal(parseOrderText("two tees").total, 48);
+  assert.equal(parseOrderText("a notepad").items[0].sku, "notebook");
+  assert.equal(parseOrderText("two notepads and a mug").total, 31);
+});
+
+test("standalone synonyms merge with the longer forms of the same item", () => {
+  const headsets = parseOrderText("a headset and two headphones");
+  assert.equal(headsets.items.length, 1);
+  assert.equal(headsets.items[0].quantity, 3);
+  const tees = parseOrderText("a tee and two tee shirts");
+  assert.equal(tees.items.length, 1);
+  assert.equal(tees.items[0].sku, "tshirt");
+  assert.equal(tees.items[0].quantity, 3);
+  const pads = parseOrderText("a notepad and a notebook");
+  assert.equal(pads.items.length, 1);
+  assert.equal(pads.items[0].quantity, 2);
+});
+
+test("negated synonyms draft none, inside-word forms invent nothing, standard example unchanged", () => {
+  const negated = parseOrderText("no headset, just a notebook");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "notebook");
+  assert.deepEqual(parseOrderText("teeter and a headsetmic").items, []);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+test("a counted unit word (pcs, pieces, units) drafts that many of the item it counts", () => {
+  const pcs = parseOrderText("3 pcs of mugs");
+  assert.equal(pcs.items.length, 1);
+  assert.equal(pcs.items[0].sku, "mug");
+  assert.equal(pcs.items[0].quantity, 3);
+  assert.equal(pcs.total, 36);
+  const pieces = parseOrderText("3 pieces of candles");
+  assert.equal(pieces.items[0].quantity, 3);
+  assert.equal(pieces.total, 40.5);
+  const words = parseOrderText("two pieces of mugs");
+  assert.equal(words.items[0].quantity, 2);
+  const units = parseOrderText("3 units of mugs and 2 pcs of headphones");
+  assert.equal(units.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(units.items.find((i) => i.sku === "headphones").quantity, 2);
+  const noOf = parseOrderText("3 pcs mugs");
+  assert.equal(noOf.items[0].quantity, 3);
+});
+
+test("a unit word with an inner count multiplies, and a bare unit word invents nothing", () => {
+  const inner = parseOrderText("2 pieces of 12 candles");
+  assert.equal(inner.items[0].quantity, 24);
+  assert.equal(inner.total, 324);
+  const bare = parseOrderText("pieces of candles please");
+  assert.equal(bare.items[0].quantity, 1);
+  assert.equal(bare.total, 13.5);
+  const one = parseOrderText("a piece of candle");
+  assert.equal(one.items[0].quantity, 1);
+});
+
+test("negation covers unit-word phrasing, and the standard example is unchanged", () => {
+  const d = parseOrderText("no pieces of candles, just a mug");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.total, 12);
+  const pcs = parseOrderText("no pcs of mugs, just a candle");
+  assert.equal(pcs.items.length, 1);
+  assert.equal(pcs.items[0].sku, "candle");
+  assert.equal(pcs.total, 13.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

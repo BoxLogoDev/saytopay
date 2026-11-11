@@ -17,9 +17,14 @@ export const CATALOG = [
   // earbud keyword, and the matcher's plural suffix can only add an
   // "s" to a keyword, never remove one — so the singular "an earbud"
   // matched nothing and the item silently vanished from the draft.
-  { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds", "earbud"] },
-  { sku: "notebook", name: "Paper notebook", price: 9.5, keywords: ["notebook", "journal"] },
-  { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "shirt"] },
+  // "headset", "tee", and "notepad" are the standalone words buyers
+  // use for these items on their own: before they were keywords, a
+  // sentence naming only that word ("a headset", "a tee", "a
+  // notepad") matched nothing and the item silently vanished from
+  // the draft, even though the longer forms ("tee shirt") matched.
+  { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds", "earbud", "headset"] },
+  { sku: "notebook", name: "Paper notebook", price: 9.5, keywords: ["notebook", "journal", "notepad"] },
+  { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "tee", "shirt"] },
   { sku: "keyboard", name: "Mechanical keyboard", price: 79.0, keywords: ["keyboard"] },
   // "mice" is the irregular plural of the computer mouse: buyers who
   // say "two mice" mean two of this item, but the regular plural rule
