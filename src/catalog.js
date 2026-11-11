@@ -24,7 +24,13 @@ export const CATALOG = [
   // the draft, even though the longer forms ("tee shirt") matched.
   { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds", "earbud", "headset"] },
   { sku: "notebook", name: "Paper notebook", price: 9.5, keywords: ["notebook", "journal", "notepad"] },
-  { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "tee", "shirt"] },
+  // "tee-shirt" is listed as its own keyword: without it, the
+  // hyphenated spelling matched "tee" and "shirt" as two separate
+  // mentions of this same item and the mentions were summed — "a
+  // tee-shirt" drafted two shirts ($48) and "two tee-shirts"
+  // drafted three. As one keyword, longest-first span claiming
+  // covers the whole word, so it counts as the single mention it is.
+  { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "tee-shirt", "tee", "shirt"] },
   { sku: "keyboard", name: "Mechanical keyboard", price: 79.0, keywords: ["keyboard"] },
   // "mice" is the irregular plural of the computer mouse: buyers who
   // say "two mice" mean two of this item, but the regular plural rule

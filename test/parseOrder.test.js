@@ -1065,3 +1065,37 @@ test("trailing slash fractions invent nothing, fraction negation holds, standard
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("the hyphenated 'tee-shirt' drafts one shirt, not tee plus shirt", () => {
+  const single = parseOrderText("a tee-shirt");
+  assert.equal(single.items.length, 1);
+  assert.equal(single.items[0].sku, "tshirt");
+  assert.equal(single.items[0].quantity, 1);
+  assert.equal(single.total, 24);
+  const mixed = parseOrderText("a tee-shirt and a notebook");
+  assert.equal(mixed.items.length, 2);
+  assert.equal(mixed.items[0].quantity, 1);
+  assert.equal(mixed.total, 33.5);
+});
+
+test("a quantity on a hyphenated 'tee-shirts' applies once, not once per part", () => {
+  const counted = parseOrderText("two tee-shirts");
+  assert.equal(counted.items.length, 1);
+  assert.equal(counted.items[0].quantity, 2);
+  assert.equal(counted.total, 48);
+  const three = parseOrderText("three tee-shirts and a mug");
+  assert.equal(three.items[0].quantity, 3);
+  assert.equal(three.total, 84);
+});
+
+test("separate 'tee' and 'shirt' mentions still sum, negation holds, standard example unchanged", () => {
+  const separate = parseOrderText("a tee and a shirt");
+  assert.equal(separate.items.length, 1);
+  assert.equal(separate.items[0].quantity, 2);
+  assert.equal(separate.total, 48);
+  const negated = parseOrderText("no tee-shirt, just a notebook");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "notebook");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

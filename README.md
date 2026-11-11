@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (121 tests) covers the AI language step (provider
+The test suite (124 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -117,7 +117,7 @@ either: "1/2 mugs" drafts one mug, not two (the denominator), "1/2
 dozen mugs" drafts one, not twenty-four, "mugs: 3/4" drafts one, not
 three, and "no 1/2 dozen mugs" drafts no mugs — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
-while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and explicit
+while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and the hyphenated spelling "tee-shirt" drafts one shirt ($24), where the same word used to match "tee" and "shirt" as two separate mentions and draft two ($48), and "two tee-shirts" drafts two, not three — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
 leaking onto the next item — and an "of the" connector between the
