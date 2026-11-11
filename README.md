@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (142 tests) covers the AI language step (provider
+The test suite (145 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -96,7 +96,7 @@ drafts no mugs — and before a pattern, style, or size adjective:
 "no striped mugs" drafts no mugs — trailing counts written after
 the item: "mugs x3" is three mugs and "coffee beans x2" is two, applied
 to that item only — and the same multiplier written after its number:
-"mugs 3x" and "mugs: 3x" are three mugs, while a longer number or a
+"mugs 3x" and "mugs: 3x" are three mugs, and the Unicode multiplication sign before the item counts the same way ("3× mugs", "3 × mugs" and "twenty-one× mugs" draft three and twenty-one), while a longer number or a
 glued unit ("mugs 2026x", "mugs 3xg") invents nothing — and list-style counts after the item: "mugs: 3",
 "candles: two", and "mugs (3)" draft those quantities for that item,
 while a colon with no count after it invents nothing — and the other

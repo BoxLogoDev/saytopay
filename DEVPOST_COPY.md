@@ -105,7 +105,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 142 passing) cover the AI step (provider
+- Tests (`npm test`, 145 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -137,7 +137,8 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   none) and before a pattern, style, or size adjective ("2 striped
   mugs" drafts two, "no striped mugs" drafts none), trailing counts after the item
   ("mugs x3", list-style "mugs: 3" and "mugs (3)", the number-times
-  forms "mugs 3x" and "mugs: 3x", and the bare, dash,
+  forms "mugs 3x" and "mugs: 3x", the Unicode multiplication sign
+  before the item ("3× mugs" drafts three, not one), and the bare, dash,
   bracket, and equals shorthands "mugs 3", "mugs - 3", "mugs [3]", and
   "mugs = 3", while a longer number after any of them invents
   nothing, and a postposed comma count that closes the mention —

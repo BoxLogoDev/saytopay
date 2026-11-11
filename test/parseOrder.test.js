@@ -191,6 +191,36 @@ test("parses a trailing x-count after the item", () => {
   assert.equal(spaced.total, 118);
 });
 
+test("parses a front Unicode multiplication count before the item", () => {
+  const d = parseOrderText("3× mugs");
+  assert.equal(d.items.length, 1);
+  assert.equal(d.items[0].sku, "mug");
+  assert.equal(d.items[0].quantity, 3);
+  assert.equal(d.total, 36);
+  const spaced = parseOrderText("3 × mugs");
+  assert.equal(spaced.items[0].quantity, 3);
+  const glued = parseOrderText("12× candles");
+  assert.equal(glued.items[0].quantity, 12);
+  assert.equal(glued.total, 162);
+});
+
+test("parses a front Unicode multiplication count on headphones and compound words", () => {
+  const d = parseOrderText("2× headphones");
+  assert.equal(d.items[0].sku, "headphones");
+  assert.equal(d.items[0].quantity, 2);
+  assert.equal(d.total, 118);
+  const compound = parseOrderText("twenty-one× mugs");
+  assert.equal(compound.items[0].quantity, 21);
+});
+
+test("a front Unicode multiplication count does not break negation or the standard example", () => {
+  const neg = parseOrderText("no 3× mugs, just a candle");
+  assert.equal(neg.items.length, 1);
+  assert.equal(neg.items[0].sku, "candle");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("parses a trailing number-times count after the item", () => {
   const d = parseOrderText("mugs 3x");
   assert.equal(d.items.length, 1);

@@ -588,9 +588,15 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // Compound tens: "twenty-one mugs" and "twenty one mugs" are 21.
   // Before this, number words stopped at twelve, so every quantity
   // from thirteen up silently drafted 1.
-  const compound = before.match(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\s](one|two|three|four|five|six|seven|eight|nine)\s*(?:x\s*)?$/);
+  // The multiplier sign before the item may be the Unicode
+  // multiplication sign as well as ASCII x: "3× mugs", "3 × mugs"
+  // and "3×mugs" mean the same as "3x mugs". Before this, the
+  // Unicode form was not recognised here (the trailing lookup
+  // already accepted it), so every such sentence silently
+  // drafted a quantity of 1.
+  const compound = before.match(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\s](one|two|three|four|five|six|seven|eight|nine)\s*(?:[x×]\s*)?$/);
   if (compound) return TENS_WORDS[compound[1]] + ONES_WORDS[compound[2]];
-  const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:x\\s*)?$`));
+  const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:[x×]\\s*)?$`));
   if (m) return quantityValue(m[1]);
   return 1;
 }
@@ -631,7 +637,7 @@ function isNegatedMention(input, hitStart) {
   // mugs") is quantity phrasing, not a new item: before it was
   // allowed here, the fraction broke the negation and the item the
   // buyer excluded was drafted after all.
-  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+\/\d+$/.test(w) || /^\d{1,3}(?:,\d{3})*$/.test(w) || /^\d+,\d+$/.test(w));
+  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+[x×]$/.test(w) || /^\d+\/\d+$/.test(w) || /^\d{1,3}(?:,\d{3})*$/.test(w) || /^\d+,\d+$/.test(w));
 }
 
 function money(n) {
