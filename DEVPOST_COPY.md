@@ -92,7 +92,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 106 passing) cover the AI step (provider
+- Tests (`npm test`, 109 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -124,7 +124,10 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   twenty-one, not twenty, and "mugs (forty two)" drafts forty-two,
   not one — and dozen and pair counts in every trailing form —
   "candles: a dozen" drafts twelve, "candles: two dozen" drafts
-  twenty-four, and "headphones: a pair" drafts two — and scale counts
+  twenty-four, and "headphones: a pair" drafts two — and the
+  "by the …" unit idiom after the item — "mugs by the dozen" drafts
+  twelve and "headphones by the pair" drafts two, while an unsized
+  unit ("mugs by the case") invents nothing — and scale counts
   in every trailing form — "mugs: a hundred" and "candles: two
   hundred" draft ninety-nine (the scaled quantity, clamped), and
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that

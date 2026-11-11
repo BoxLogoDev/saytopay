@@ -8,7 +8,7 @@ QA cycle completes a real sandbox create → approve → capture run.
 ## Pre-flight (5 minutes, before recording)
 
 ```bash
-npm test        # must be 106/106 passing
+npm test        # must be 109/109 passing
 npm start       # http://localhost:3000
 ```
 

@@ -894,3 +894,33 @@ test("'mice' inside another word invents nothing, and the standard example is un
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("'by the dozen' after the item drafts twelve of that item only", () => {
+  const dozen = parseOrderText("mugs by the dozen");
+  assert.equal(dozen.items.length, 1);
+  assert.equal(dozen.items[0].sku, "mug");
+  assert.equal(dozen.items[0].quantity, 12);
+  assert.equal(dozen.total, 144);
+  const mixed = parseOrderText("buy mugs by the dozen and candles by the dozen");
+  assert.equal(mixed.items.find((i) => i.sku === "mug").quantity, 12);
+  assert.equal(mixed.items.find((i) => i.sku === "candle").quantity, 12);
+  assert.equal(mixed.total, 306);
+});
+
+test("'by the pair' drafts two, and the trailing idiom takes precedence", () => {
+  const pair = parseOrderText("headphones by the pair");
+  assert.equal(pair.items[0].sku, "headphones");
+  assert.equal(pair.items[0].quantity, 2);
+  assert.equal(pair.total, 118);
+  assert.equal(parseOrderText("mugs by the dozen, please").items[0].quantity, 12);
+  // The trailing count is written for this exact mention, so it wins
+  // over a quantity word before the item, like every trailing form.
+  assert.equal(parseOrderText("2 mugs by the dozen").items[0].quantity, 12);
+});
+
+test("an unsized 'by the …' unit invents nothing, and the standard example is unchanged", () => {
+  assert.equal(parseOrderText("mugs by the case").items[0].quantity, 1);
+  assert.equal(parseOrderText("candles by the box").items[0].quantity, 1);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

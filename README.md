@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (106 tests) covers the AI language step (provider
+The test suite (109 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -98,7 +98,10 @@ twenty, and "mugs (forty two)" drafts forty-two, not one — and dozen
 and pair counts in every trailing form: "candles: a dozen" drafts
 twelve, "candles: two dozen" drafts twenty-four, "mugs (half a
 dozen)" drafts six, "mugs, a dozen of them" drafts twelve, and
-"headphones: a pair" drafts two — and scale counts in every trailing
+"headphones: a pair" drafts two — and the "by the …" unit idiom after
+the item: "mugs by the dozen" drafts twelve and "headphones by the
+pair" drafts two, while an unsized unit ("mugs by the case") invents
+nothing — and scale counts in every trailing
 form: "mugs: a hundred" drafts ninety-nine (one hundred, clamped to
 the per-item maximum), "candles: two hundred" drafts ninety-nine,
 "mugs, a hundred of them" drafts ninety-nine, and "candles: a hundred

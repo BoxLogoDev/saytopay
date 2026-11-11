@@ -178,6 +178,14 @@ function detectTrailingQuantity(afterRaw) {
   // trailing pattern below see no count, exactly like the front
   // lookup in detectQuantity.
   const after = String(afterRaw || "").replace(/\d+\.\d+/g, " decimal ");
+  // The "by the …" unit idiom names the quantity the item is sold
+  // in: "mugs by the dozen" is twelve mugs and "headphones by the
+  // pair" is two. Before this, the idiom was ignored and every such
+  // mention silently drafted a quantity of 1. Only dozen and
+  // pair/couple have a fixed size — "by the case" or "by the box"
+  // invent nothing, because a case holds no fixed number.
+  const byUnit = after.match(/^\s+by\s+the\s+(dozen|pairs?|couples?)\b/);
+  if (byUnit) return byUnit[1] === "dozen" ? 12 : 2;
   const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
   // The multiplier can also be written after its number: "mugs 3x",

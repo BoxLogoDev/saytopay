@@ -1553,3 +1553,29 @@ PayPal AI Hackathon 2026 출품작 제작·QA 로그. 제출 마감 2026-11-13 0
 
 ### 다음 회차 제안
 - 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이고, LLM 키가 들어오면 실모델 호출 검증을 함께 수행한다. 둘 다 없으면 데모·문안 카테고리로 진행하되 기능 보강은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
+
+## 63회차 — 2026-11-11 07:34 KST · 카테고리: 데모·문안
+
+### 판단 근거
+- 직전 회차는 기능 보강(62회차)이었으므로 같은 카테고리를 반복하지 않았다. 62회차 제안대로, 주인님 재로그인 증거가 없어 승인→캡처 QA를 완료로 기록할 수 없고 LLM 키도 여전히 없는 상태에서 데모·문안 1단위를 수행했다. 최종 제출 단계(2026-11-12 18:00 이후)가 아니다. 주인님은 이시가키 여행(다이빙 2일차) 중이다.
+- 시작 시 재확인: `.env` 존재(PayPal Client ID/Secret 각 길이 80, 값은 기록하지 않음), LLM 키 없음(`.env`·셸 모두), `npm test` 106/106 통과 상태에서 시작했다.
+
+### 한 일 — 최종 제출 런북·촬영 상태의 낡은 실측값 정정 (63회차 기준)
+- 발견한 결함: `SUBMISSION_RUNBOOK.md` Step 1이 원격 HEAD를 54회차 커밋(236876a8)으로 적고 있었으나, 이번 회차에 GitHub 읽기 도구(list_commits)로 직접 재확인한 실제 원격 HEAD는 62회차 커밋 78de524359c2f448fa0425abdda684c69e6c4006이었다. 62회차에 보안 점검 알림 때문에 손대지 못한 문구가 그대로 남아, 최종 단계 회차가 이미 끝난 푸시를 다시 하거나 낡은 상태를 기준으로 삼을 수 있는 위치였다. Gate 0 최신 생성 주문도 62회차 값(9CP83183YB135401M)이었다.
+- `SUBMISSION_RUNBOOK.md` 정정: Gate 0 최신 생성 주문을 이번 회차 실측 주문(8JY965682T022990H, CREATED, $45.50, 상태 조회 CREATED·capture 없음, 미승인 캡처 422 ORDER_NOT_APPROVED 거부 포함)으로 교체, Step 1 원격 HEAD를 실측 62회차 커밋으로 교체했다가 푸시 성공 후 63회차 커밋(5733fec4)으로 다시 갱신, 빈칸 재검증 문구를 63회차로 교체.
+- `DEMO_SCRIPT.md` 촬영 가능 상태에 63회차 블록 추가(런북 정정·제출 이미지 2장 보관 위치 재확인 포함).
+- 전수 대조: README·DEVPOST_COPY·FILMING_RUNBOOK의 테스트 수(106)와 나머지 제출 문안은 실측과 일치해 손대지 않았다. 남은 플레이스홀더는 [SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]·[VIDEO_URL]뿐이며 모두 Gate 0·영상 제작에 묶인 미검증 항목이라 그대로 뒀다. 제출 이미지 2장(1600x900, PNG·RGB)은 submission-assets 보관 위치에 그대로 있음을 프로그램으로 확인했다.
+
+### 감독 검증 (직접 실행)
+- `npm test` 106/106 통과 (회차 시작·종료 시점 재실행).
+- 실제 서버 기동 스모크: `/api/health` 정상(sandbox, credentialsConfigured=true, ai.configured=false), `/api/parse` 표준 예시 $45.50 + `source:{type:"rules"}`, `/api/catalog` 12개 품목, UI 서빙(제목) 정상 — Block A(장면 1~3) 촬영 가능 상태 유지 확인. 검증용 서버는 종료(포트 닫힘·프로세스 없음)까지 확인했다.
+- **실샌드박스 주문 생성 재검증**: 데모 문장(`2 coffee beans and a notebook`)만으로 `POST /api/orders` → 실제 샌드박스 주문 생성 성공(주문 8JY965682T022990H, CREATED, 승인 URL 발급). `GET /api/orders/:id` 조회로 CREATED·captureId=null·금액 $45.50·coffee-beans×2+notebook×1 확인, 미승인 캡처는 실제 API가 422 `ORDER_NOT_APPROVED`로 거부(앱은 502 upstream_error로 매핑). 승인·캡처를 한 것으로 기록하지 않으며, 이 CREATED 주문 ID로 DEVPOST_COPY 빈칸을 채우지 않았다.
+- 공개 자료 개인정보·회사 표현 스캔: `.env`·DEVLOG 제외 전체에서 실명·연락처·소속·회사(LS) 표현 0건.
+- **공개 저장소 동기화 성공**: 스냅샷 푸시 완료 — 커밋 5733fec4e8911b274eb28c6cf1a771e37aaa4d0a(파일 28개, 537,835바이트, dry-run 사전 통과). GitHub 읽기 도구(list_commits)로 원격 HEAD가 이 커밋으로 이동했음을 직접 확인했다. 단, 이 63회차 로그 항목과 그 직후의 SUBMISSION_RUNBOOK Step 1 HEAD 갱신은 푸시 이후에 쓴 것이라 로컬에만 있으며 다음 푸시에 함께 올라간다.
+
+### 완료로 기록하지 않는 것 (막힌 지점 2건 — 변동 없음)
+1. **구매자 승인 → 캡처 미검증** — 주인님이 브라우저에서 PayPal Developer에 다시 로그인해 주시면 다음 QA 회차가 Sandbox Accounts 구매자 비밀번호 확인(값은 기록하지 않음) → 승인 → 캡처·capture ID 확보 → DEVPOST_COPY 빈칸([SANDBOX_ORDER_ID]·[SANDBOX_CAPTURE_ID]) 실측값 기입까지 수행한다. 제출 마감 2026-11-13 05:00 KST가 이시가키 귀국(11/13 16:10)보다 먼저이므로, 승인 1건은 11/12 18:00 최종 제출 단계 전까지 풀려야 한다.
+2. **실제 LLM 호출 미검증 (52회차와 동일)** — 이 환경에 LLM API 키가 없어 실제 모델 호출은 아직 검증되지 않았다. 키가 보안 경로로 들어오면 `/api/health`의 ai.configured=true와 실제 문장의 source.type="llm" 실측이 후속 검증이다.
+
+### 다음 회차 제안
+- 주인님 재로그인이 확인되면 QA 속행(승인→캡처)이 최우선이고, LLM 키가 들어오면 실모델 호출 검증을 함께 수행한다. 둘 다 없으면 기능 보강 카테고리(키트 범위 안의 작은 개선 1개)로 진행하되 데모·문안은 반복하지 않는다. 최종 제출 단계는 2026-11-12 18:00 KST 이후 첫 회차이며, 그 회차는 SUBMISSION_RUNBOOK 순서대로 수행한다.
