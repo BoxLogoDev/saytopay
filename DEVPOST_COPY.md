@@ -92,7 +92,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 109 passing) cover the AI step (provider
+- Tests (`npm test`, 112 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -133,7 +133,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
   never supply a count ("1.5 mugs" drafts one, not five, and
   "1.5 dozen mugs" drafts one, not sixty), word-boundary matching so
-  "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse),
+  "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones),
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"
   drafts two, and quantities before "more" so "two more mugs"

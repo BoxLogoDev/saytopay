@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 65th cycle (2026-11-11) creation
-is verified again (order 5J742373306031326, CREATED, $45.50,
+alone does not clear this gate. As of the 66th cycle (2026-11-11) creation
+is verified again (order 92D00163KB922543S, CREATED, $45.50,
 coffee-beans ×2 + notebook ×1 from the filmed sentence
 "2 coffee beans and a notebook"; status
 lookup returned CREATED with no capture and an
@@ -28,17 +28,16 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the 64th-cycle commit
-  a39b725bda8fa1eebf92686d8da1892814adbeec (push completed in the 64th
+- Remote HEAD is the 65th-cycle commit
+  5d5c41629a227b9177d934e2c3f08a4c7f75a336 (push completed in the 65th
   cycle and re-read with the GitHub read tool; code and docs through
-  the 64th-cycle edits are reflected; this Step 1 HEAD note itself and
-  the 64th-cycle DEVLOG entry and the 65th-cycle edits are local until
-  the next push — the 58th
+  the 65th-cycle edits are reflected; this Step 1 HEAD note itself and
+  the 65th-cycle DEVLOG entry are local until the next push — the 58th
   cycle has no DEVLOG entry of its own; see the supplement note
   recorded in the 59th cycle).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  109-test suite.
+  112-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -46,7 +45,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 65th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 66th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

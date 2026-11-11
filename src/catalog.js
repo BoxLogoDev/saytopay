@@ -13,7 +13,11 @@ export function publicCatalog() {
 
 export const CATALOG = [
   { sku: "coffee-beans", name: "Coffee beans 1kg", price: 18.0, keywords: ["coffee beans", "coffee bean", "coffee"] },
-  { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds"] },
+  // "earbud" is listed on its own: the plural "earbuds" was the only
+  // earbud keyword, and the matcher's plural suffix can only add an
+  // "s" to a keyword, never remove one — so the singular "an earbud"
+  // matched nothing and the item silently vanished from the draft.
+  { sku: "headphones", name: "Wireless headphones", price: 59.0, keywords: ["headphones", "headphone", "earbuds", "earbud"] },
   { sku: "notebook", name: "Paper notebook", price: 9.5, keywords: ["notebook", "journal"] },
   { sku: "tshirt", name: "Cotton t-shirt", price: 24.0, keywords: ["t-shirt", "tshirt", "tee shirt", "shirt"] },
   { sku: "keyboard", name: "Mechanical keyboard", price: 79.0, keywords: ["keyboard"] },

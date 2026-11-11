@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (109 tests) covers the AI language step (provider
+The test suite (112 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -110,7 +110,7 @@ count (the catalog sells whole units): "1.5 mugs" drafts one mug, not
 five, "1.25 mugs" drafts one, not twenty-five, and "1.5 dozen mugs"
 drafts one, not sixty — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
-while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) — and explicit
+while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
 and "a mug, not a candle" drafts only the mug, without the negation
 leaking onto the next item — and an "of the" connector between the

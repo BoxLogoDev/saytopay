@@ -924,3 +924,33 @@ test("an unsized 'by the …' unit invents nothing, and the standard example is 
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("the singular 'earbud' matches the headphones, with its quantity", () => {
+  const one = parseOrderText("an earbud");
+  assert.equal(one.items.length, 1);
+  assert.equal(one.items[0].sku, "headphones");
+  assert.equal(one.items[0].quantity, 1);
+  assert.equal(one.total, 59);
+  const mixed = parseOrderText("an earbud and a notebook");
+  assert.equal(mixed.items.find((i) => i.sku === "headphones").quantity, 1);
+  assert.equal(mixed.items.find((i) => i.sku === "notebook").quantity, 1);
+  assert.equal(mixed.total, 68.5);
+  assert.equal(parseOrderText("two earbuds").items[0].quantity, 2);
+});
+
+test("'earbud' merges with an 'earbuds' mention of the same item", () => {
+  const merged = parseOrderText("an earbud and two earbuds");
+  assert.equal(merged.items.length, 1);
+  assert.equal(merged.items[0].sku, "headphones");
+  assert.equal(merged.items[0].quantity, 3);
+  assert.equal(merged.total, 177);
+});
+
+test("a negated 'earbud' drafts none, and the standard example is unchanged", () => {
+  const negated = parseOrderText("no earbud, just a notebook");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "notebook");
+  assert.equal(negated.total, 9.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
