@@ -58,7 +58,10 @@ adjective does ("2 black headphones" drafts two, "a dozen red
 candles" drafts twelve, and "no red mugs" drafts no mugs), or written after the item in
 shopping-list style ("mugs x3", "mugs 3x", and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one), and a scale phrase counts in every trailing form ("mugs: a hundred" drafts ninety-nine — one hundred, clamped — not one, and "candles: two hundred" drafts ninety-nine, not two). A decimal amount never supplies a count
 either — "1.5 mugs" drafts one, not five, and "1.5 dozen mugs" drafts
-one, not sixty. Keywords match on word boundaries,
+one, not sixty. A slash fraction never supplies a count either —
+"1/2 mugs" drafts one, not two (the denominator), "1/2 dozen mugs"
+drafts one, not twenty-four, and "mugs: 3/4" drafts one, not three.
+Keywords match on word boundaries,
 so a word that merely contains a product name — "booking", "cupcake",
 "mousepad" — never adds an item the buyer did not name, while plurals
 ("mugs", "notebooks") still match. An item the buyer explicitly rules
@@ -95,7 +98,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 118 passing) cover the AI step (provider
+- Tests (`npm test`, 121 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -139,7 +142,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   hundred" draft ninety-nine (the scaled quantity, clamped), and
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
   never supply a count ("1.5 mugs" drafts one, not five, and
-  "1.5 dozen mugs" drafts one, not sixty), word-boundary matching so
+  "1.5 dozen mugs" drafts one, not sixty), slash fractions that never
+  supply a count either ("1/2 mugs" drafts one, not two, and
+  "1/2 dozen mugs" drafts one, not twenty-four), word-boundary matching so
   "booking" never drafts a book while plurals still match (including the irregular "mice", which drafts the mouse, and the singular "earbud", which drafts the headphones, and the standalone synonyms "headset", "tee", and "notepad", which draft the headphones, the t-shirt, and the notebook),
   explicit negation so "no notebook" never drafts a notebook, and
   quantities before an "of the" connector so "two of the mugs"

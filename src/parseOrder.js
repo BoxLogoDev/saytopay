@@ -177,7 +177,18 @@ function detectTrailingQuantity(afterRaw) {
   // after the x. Neutralising decimals in this copy makes every
   // trailing pattern below see no count, exactly like the front
   // lookup in detectQuantity.
-  const after = String(afterRaw || "").replace(/\d+\.\d+/g, " decimal ");
+  // A slash fraction never supplies a trailing count either: the
+  // patterns below read whichever side of the slash they could reach
+  // — "mugs: 3/4" drafted three (the numerator) — so fractions are
+  // neutralised in this copy exactly like decimals. A fraction
+  // directly in front of a dozen or scale word is neutralised
+  // together with that word: the group and scale patterns can match
+  // with an empty count, so "mugs: 1/2 dozen" would otherwise become
+  // a full dozen.
+  const after = String(afterRaw || "")
+    .replace(/\d+\.\d+/g, " decimal ")
+    .replace(/\d+\s*\/\s*\d+\s+(?:dozen|hundred|thousand)\b/g, " fractiongroup ")
+    .replace(/\d+\s*\/\s*\d+/g, " fraction ");
   // The "by the …" unit idiom names the quantity the item is sold
   // in: "mugs by the dozen" is twelve mugs and "headphones by the
   // pair" is two. Before this, the idiom was ignored and every such
@@ -364,9 +375,21 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // directly in front of one of those words is refused outright
   // instead of silently becoming a full dozen or hundred.
   before = before.replace(/\d+\.\d+/g, " decimal ");
+  // A slash fraction never supplies a count either, for the same
+  // reason: the catalog sells whole units, so "1/2 mugs" cannot be
+  // ordered — but before this, the digit rules read the denominator
+  // as the count: "1/2 mugs" drafted two ($24), "2/3 mugs" drafted
+  // three, "1/2 dozen mugs" drafted twenty-four ($288) and "3/4
+  // dozen mugs" drafted forty-eight. Neutralising every fraction in
+  // this look-back copy makes the integer rules see no count in it,
+  // and the dozen/scale guard below refuses a fraction directly in
+  // front of one of those words outright, exactly like a decimal.
+  before = before.replace(/\d+\s*\/\s*\d+/g, " fraction ");
   if (
     /(?:^|\s)decimal\s+dozen\b/.test(before) ||
-    /(?:^|\s)decimal\s+(?:hundred|thousand)\b/.test(before)
+    /(?:^|\s)decimal\s+(?:hundred|thousand)\b/.test(before) ||
+    /(?:^|\s)fraction\s+dozen\b/.test(before) ||
+    /(?:^|\s)fraction\s+(?:hundred|thousand)\b/.test(before)
   ) {
     return 1;
   }
@@ -471,7 +494,11 @@ function isNegatedMention(input, hitStart) {
   const cue = before.match(/(?:^|\s)(no|not|without|never|don't|dont|do not|exclude|remove)(?:\s+(.+))?$/);
   if (!cue) return false;
   const between = (cue[2] || "").trim().split(/[\s-]+/).filter(Boolean);
-  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w));
+  // A fraction token between the cue and the item ("no 1/2 dozen
+  // mugs") is quantity phrasing, not a new item: before it was
+  // allowed here, the fraction broke the negation and the item the
+  // buyer excluded was drafted after all.
+  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+\/\d+$/.test(w));
 }
 
 function money(n) {

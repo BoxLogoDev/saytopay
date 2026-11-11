@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (118 tests) covers the AI language step (provider
+The test suite (121 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -112,7 +112,10 @@ the per-item maximum), "candles: two hundred" drafts ninety-nine,
 and five" drafts ninety-nine — decimal amounts, which never supply a
 count (the catalog sells whole units): "1.5 mugs" drafts one mug, not
 five, "1.25 mugs" drafts one, not twenty-five, and "1.5 dozen mugs"
-drafts one, not sixty — word-boundary matching:
+drafts one, not sixty — slash fractions, which never supply a count
+either: "1/2 mugs" drafts one mug, not two (the denominator), "1/2
+dozen mugs" drafts one, not twenty-four, "mugs: 3/4" drafts one, not
+three, and "no 1/2 dozen mugs" drafts no mugs — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
 while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,

@@ -1028,3 +1028,40 @@ test("negation covers unit-word phrasing, and the standard example is unchanged"
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });
+
+test("a slash fraction in front of the item invents no count", () => {
+  const half = parseOrderText("1/2 mugs");
+  assert.equal(half.items.length, 1);
+  assert.equal(half.items[0].quantity, 1);
+  assert.equal(half.total, 12);
+  const twoThirds = parseOrderText("2/3 mugs");
+  assert.equal(twoThirds.items[0].quantity, 1);
+  const spaced = parseOrderText("1 / 2 candles");
+  assert.equal(spaced.items[0].quantity, 1);
+  assert.equal(spaced.total, 13.5);
+});
+
+test("a slash fraction in front of dozen or scale words drafts one, not the denominator times the group", () => {
+  const halfDozen = parseOrderText("1/2 dozen mugs");
+  assert.equal(halfDozen.items[0].quantity, 1);
+  assert.equal(halfDozen.total, 12);
+  const threeQuarterDozen = parseOrderText("3/4 dozen mugs");
+  assert.equal(threeQuarterDozen.items[0].quantity, 1);
+  const halfHundred = parseOrderText("1/2 hundred candles");
+  assert.equal(halfHundred.items[0].quantity, 1);
+  const real = parseOrderText("a dozen mugs");
+  assert.equal(real.items[0].quantity, 12);
+});
+
+test("trailing slash fractions invent nothing, fraction negation holds, standard example unchanged", () => {
+  const colon = parseOrderText("mugs: 3/4");
+  assert.equal(colon.items[0].quantity, 1);
+  const colonDozen = parseOrderText("mugs: 1/2 dozen");
+  assert.equal(colonDozen.items[0].quantity, 1);
+  const negated = parseOrderText("no 1/2 dozen mugs, just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  assert.equal(negated.total, 13.5);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});

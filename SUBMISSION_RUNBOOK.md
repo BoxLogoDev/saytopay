@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 71st cycle (2026-11-11) creation
-is verified again (order 9VX536379S603910S, CREATED, $45.50,
+alone does not clear this gate. As of the 72nd cycle (2026-11-11) creation
+is verified again (order 5BF72451PT985813P, CREATED, $45.50,
 coffee-beans ×2 + notebook ×1 from the filmed sentence
 "2 coffee beans and a notebook"; status
 lookup returned CREATED with no capture and an
@@ -28,17 +28,17 @@ on a captured transaction stays gated until this clears.
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the commit 9b02ee5a8288090bf6a84208f88cfe6fd28b2ed9
-  ("SayToPay QA cycle 70", re-read with the GitHub read tool in the
-  70th cycle; code and docs through the 70th-cycle edits are
-  reflected; only this Step 1 HEAD refresh, the 70th-cycle DEVLOG
-  entry and the 71st-cycle edits, written after that push, are local
-  until the next push — the 58th
+- Remote HEAD is the commit 8ac79c4c176fa120076087f3f5b838c17ffa9200
+  ("SayToPay QA cycle 71", re-read with the GitHub read tool in the
+  71st cycle; code and docs through the 71st-cycle edits are
+  reflected; only this Step 1 HEAD refresh and the 71st-cycle DEVLOG
+  entry, both written after that push, are local until the next push
+  — the 58th
   cycle has no DEVLOG entry of its own; see the supplement note
   recorded in the 59th cycle).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  118-test suite.
+  121-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -46,7 +46,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 71st cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 72nd cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 
