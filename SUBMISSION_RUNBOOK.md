@@ -11,8 +11,8 @@ announced (2026-12-21).
 
 A QA cycle must complete a **real** sandbox run — create → buyer approval
 → capture — and record the real order ID and capture ID. Order creation
-alone does not clear this gate. As of the 89th cycle (2026-11-12) creation
-is verified again (order 36A31438RC223501P, CREATED, $45.50,
+alone does not clear this gate. As of the 97th cycle (2026-11-12) creation
+is verified again (order 383176696S456440N, CREATED, $45.50,
 coffee-beans ×2 + notebook ×1 from the filmed sentence
 "2 coffee beans and a notebook"; status
 lookup returned CREATED with no capture and an
@@ -21,18 +21,28 @@ unapproved capture was refused by the real API with 422
 → capture is still unverified: it needs the owner signed in to PayPal
 Developer in the browser so the sandbox buyer account password can be
 read from Sandbox Accounts (the value is never recorded), or the owner
-approving the sandbox checkout directly. Everything below that depends
+approving the sandbox checkout directly. Note (93rd cycle): the two
+orders prepared on 2026-11-11 for owner approval (priority and fallback,
+see the Gate 0 server note of that date) now return 404
+`RESOURCE_NOT_FOUND` on lookup, so their approval links must not be
+relied on — use a freshly created order's approval link, such as this
+cycle's order above. The approval link for order 95926953LT7119902,
+sent to the owner on 2026-11-12, was rechecked in the 97th cycle and
+that order is still CREATED with no capture — owner approval has not
+happened yet. The 96th cycle's order (1VP23753NP2634533) was also
+rechecked in the 97th cycle and is likewise still CREATED with no
+capture. Everything below that depends
 on a captured transaction stays gated until this clears.
 
 ## Step 1 — Push the latest snapshot to the public repository
 
 - Repository: https://github.com/BoxLogoDev/saytopay (public, MIT LICENSE
   already in the tree)
-- Remote HEAD is the commit 6998656bd92222459f1381d8383a980c28ef57e6
-  (pushed in the 88th cycle and confirmed by the push tool's returned
-  ref and the local snapshot-sync record; the 87th- and 88th-cycle
-  code, tests, and documents are reflected; the 89th-cycle edits and
-  DEVLOG entry are local until the next push — the
+- Remote HEAD is the commit 147b01695bd3313df36ac9d3ed2dc24d9c612394
+  (pushed in the 89th cycle and confirmed by the push tool's returned
+  ref and the local snapshot-sync record; the 89th-cycle
+  code, tests, and documents are reflected; the 90th-, 91st-, 92nd-, 93rd-, 94th-, 95th-, 96th-, and 97th-cycle edits and
+  DEVLOG entries are local until the next push — the
   58th cycle has no DEVLOG entry of its own (see the supplement note
   recorded in the 59th cycle), and the 78th cycle's DEVLOG entry is
   likewise missing (see the supplement note recorded in the 79th
@@ -40,7 +50,7 @@ on a captured transaction stays gated until this clears.
   `DEMO_SCRIPT.md` and this runbook).
   Push the current snapshot (`.env` excluded) and re-read the remote HEAD
   before submitting — the submitted link must show the final code and the
-  145-test suite.
+  157-test suite.
 
 ## Step 2 — Fill the three remaining placeholders in DEVPOST_COPY.md
 
@@ -48,7 +58,7 @@ on a captured transaction stays gated until this clears.
   captured run, amount $45.50, status COMPLETED. Never from a CREATED
   order.
 - `[VIDEO_URL]` — only after Step 3 uploads the final video.
-- No other placeholders exist (re-verified 89th cycle: `[REPO_URL]` was
+- No other placeholders exist (re-verified 97th cycle: `[REPO_URL]` was
   already replaced with the real repository address; the only remaining
   placeholders in the submission copy are the three listed above).
 

@@ -87,7 +87,12 @@ const FILLER_WORDS = new Set([
 // "mugs x3", "coffee beans x2", "headphones x 2". Before this, the
 // trailing count was silently ignored and every such sentence drafted
 // a quantity of 1. Only a digit count after x/× counts — a bare "x"
-// with no number invents nothing. The multiplier can also follow its
+// with no number invents nothing. The asterisk buyers type on a
+// keyboard for the same multiplication — "mugs * 3", "3 * mugs" —
+// counts exactly like x/× in every position where those count:
+// before this, every asterisk form silently drafted a quantity of 1
+// (and "no 3* mugs" was drafted at all, because "3*" was not
+// recognised negation filler either). The multiplier can also follow its
 // number — "mugs 3x", "mugs: 3x", "mugs (3x)" — the mirror of the
 // front-of-item "3x mugs" form; before that was read, every such
 // entry drafted a quantity of 1 as well.
@@ -154,12 +159,18 @@ const FILLER_WORDS = new Set([
 // article was read) and "candles: two hundred" drafted two (only
 // the count word was read). Scaled quantities above ninety-nine are
 // clamped by the caller, exactly like the front-of-item scale forms.
-const GROUP_PHRASE = `(?:half[-\\s]+(?:a[-\\s]+)?dozen|(?:a[-\\s]+)?couple[-\\s]+of[-\\s]+dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+dozen|dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+(?:pairs?|couples?)|pairs?|couples?)`;
+const GROUP_PHRASE = `(?:(?:(?:a|one|two|three)[-\\s]+)?quarters?[-\\s]+(?:of[-\\s]+(?:a[-\\s]+)?)?dozen|half[-\\s]+(?:a[-\\s]+)?dozen|(?:a[-\\s]+)?couple[-\\s]+of[-\\s]+dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+dozen|dozen|(?:(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3})\\s+(?:pairs?|couples?)|pairs?|couples?)`;
 
 function groupPhraseValue(phrase) {
   const p = String(phrase || "").replace(/-/g, " ").trim();
   if (/^half\s+(?:a\s+)?dozen$/.test(p)) return 6;
   if (/^(?:a\s+)?couple\s+of\s+dozen$/.test(p)) return 24;
+  // A quarter of a dozen is three — "quarter dozen", "a quarter
+  // dozen", "quarter of a dozen", "three quarters of a dozen" (9).
+  // Before this, the generic dozen rule below read every one of
+  // these as a full dozen.
+  const quarter = p.match(/^(?:(one|two|three|\d{1,3})\s+|a\s+)?quarters?\s+(?:of\s+(?:a\s+)?)?dozen$/);
+  if (quarter) return (quarter[1] ? quantityValue(quarter[1]) : 1) * 3;
   let m = p.match(new RegExp(`^(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s+dozen$`));
   if (m) return compoundValue(m[1], m[2]) * 12;
   m = p.match(/^(?:(\d{1,3})(?!\d)|([a-z]+))?\s*dozen$/);
@@ -187,6 +198,29 @@ function scalePhraseValue(phrase) {
 }
 
 function detectTrailingQuantity(afterRaw) {
+  // A fraction of a dozen written after the item is a whole number
+  // of units, exactly as in front of it: "mugs: 1/2 dozen" is six
+  // and "mugs (3/4 dozen)" is nine. These forms are read from the
+  // raw text first, because the neutralisation below would
+  // otherwise erase the fraction together with its dozen. Only
+  // fractions that come out whole count; the rest fall through
+  // and draft one, like every other fraction form.
+  const FD = `(\\d+)\\s*\\/\\s*(\\d+)\\s+dozen`;
+  const fdForms = [
+    new RegExp(`^\\s*:\\s*${FD}\\b`),
+    new RegExp(`^\\s*\\(\\s*${FD}\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*${FD}\\s*\\]`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*${FD}\\b`),
+    new RegExp(`^\\s*=\\s*${FD}\\b`),
+    new RegExp(`^\\s*,\\s*${FD}\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`),
+  ];
+  for (const re of fdForms) {
+    const fm = String(afterRaw || "").match(re);
+    if (fm) {
+      const value = (parseInt(fm[1], 10) * 12) / parseInt(fm[2], 10);
+      if (Number.isInteger(value)) return value;
+    }
+  }
   // A decimal number never supplies a trailing count either:
   // "mugs: 2.5" read the integer part (2) and "mugs x1.5" the digit
   // after the x. Neutralising decimals in this copy makes every
@@ -229,6 +263,26 @@ function detectTrailingQuantity(afterRaw) {
   // in front of the item ("pack of 6 mugs") already counted. The
   // container word is required — a bare "of 6" invents nothing.
   const PACK_COUNT = `(?:\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN}|(?:${TENS_TOKEN})[-\\s](?:${ONES_TOKEN}))`;
+  // A counted pack written after the item — "mugs (2-pack)",
+  // "mugs [six-pack]", "mugs, 2-pack" — names the quantity in the
+  // pack word itself. Before this, the parenthesised, bracketed,
+  // and comma forms silently drafted one (the colon, dash, and
+  // equals forms only appeared to work because their generic
+  // count patterns read the leading number and ignored "pack").
+  const N_PACK = `(${PACK_COUNT})[-\\s]packs?\\b`;
+  const npackForms = [
+    new RegExp(`^\\s*\\(\\s*${N_PACK}\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*${N_PACK}\\s*\\]`),
+    new RegExp(`^\\s*:\\s*${N_PACK}`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*${N_PACK}`),
+    new RegExp(`^\\s*=\\s*${N_PACK}`),
+    new RegExp(`^\\s*,\\s*${N_PACK}`),
+    new RegExp(`^\\s+${N_PACK}`),
+  ];
+  for (const re of npackForms) {
+    const nm = after.match(re);
+    if (nm) return countPhraseValue(nm[1].replace(/-/g, " "));
+  }
   const PACK_SIZE = `(?:packs?|box(?:es)?|sets?|cases?|bundles?|cartons?|bags?|jars?|crates?|sacks?|pouch(?:es)?|tins?)\\s+of\\s+(${PACK_COUNT})`;
   const packForms = [
     new RegExp(`^\\s*\\(\\s*${PACK_SIZE}\\s*\\)`),
@@ -251,20 +305,20 @@ function detectTrailingQuantity(afterRaw) {
   // number ("mugs 2026x", "mugs = 2026") still invents nothing.
   const GROUPED = String.raw`\d{1,3}(?:,\d{3})+`;
   const groupedForms = [
-    new RegExp(`^\\s*[x×]\\s*(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s*[x×*]\\s*(${GROUPED})(?!\\d)`),
     new RegExp(`^\\s+(${GROUPED})(?!\\d)x(?![a-z])`),
     new RegExp(`^\\s*:\\s*(${GROUPED})(?!\\d)`),
-    new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${GROUPED})\\s*\\)`),
-    new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${GROUPED})\\s*\\]`),
+    new RegExp(`^\\s*\\(\\s*(?:[x×*]\\s*)?(${GROUPED})\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*(?:[x×*]\\s*)?(${GROUPED})\\s*\\]`),
     new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${GROUPED})(?!\\d)`),
-    new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${GROUPED})(?!\\d)`),
+    new RegExp(`^\\s*=\\s*(?:[x×*]\\s*)?(${GROUPED})(?!\\d)`),
     new RegExp(`^\\s*,\\s*(${GROUPED})(?!\\d)(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`),
   ];
   for (const re of groupedForms) {
     const g = after.match(re);
     if (g) return parseInt(g[1].replace(/,/g, ""), 10);
   }
-  const x = after.match(/^\s*[x×]\s*(\d{1,3})\b/);
+  const x = after.match(/^\s*[x×*]\s*(\d{1,3})\b/);
   if (x) return parseInt(x[1], 10);
   // The multiplier can also be written after its number: "mugs 3x",
   // "mugs: 3x", "mugs (3x)". Before this, every such form drafted
@@ -294,13 +348,13 @@ function detectTrailingQuantity(afterRaw) {
   // documented above.
   const colonCompound = after.match(new RegExp(`^\\s*:\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
   if (colonCompound) return compoundValue(colonCompound[1], colonCompound[2]);
-  const parenCompound = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\)`));
+  const parenCompound = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×*]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\)`));
   if (parenCompound) return compoundValue(parenCompound[1], parenCompound[2]);
-  const bracketCompound = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\]`));
+  const bracketCompound = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×*]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\s*\\]`));
   if (bracketCompound) return compoundValue(bracketCompound[1], bracketCompound[2]);
   const dashCompound = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
   if (dashCompound) return compoundValue(dashCompound[1], dashCompound[2]);
-  const equalsCompound = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
+  const equalsCompound = after.match(new RegExp(`^\\s*=\\s*(?:[x×*]\\s*)?(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b`));
   if (equalsCompound) return compoundValue(equalsCompound[1], equalsCompound[2]);
   const commaCompound = after.match(new RegExp(`^\\s*,\\s*(${TENS_TOKEN})[-\\s](${ONES_TOKEN})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaCompound) return compoundValue(commaCompound[1], commaCompound[2]);
@@ -310,13 +364,13 @@ function detectTrailingQuantity(afterRaw) {
   // ("mugs: a hundred" drafted one).
   const colonScale = after.match(new RegExp(`^\\s*:\\s*(${SCALE_PHRASE})\\b`));
   if (colonScale) return scalePhraseValue(colonScale[1]);
-  const parenScale = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\s*\\)`));
+  const parenScale = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×*]\\s*)?(${SCALE_PHRASE})\\s*\\)`));
   if (parenScale) return scalePhraseValue(parenScale[1]);
-  const bracketScale = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\s*\\]`));
+  const bracketScale = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×*]\\s*)?(${SCALE_PHRASE})\\s*\\]`));
   if (bracketScale) return scalePhraseValue(bracketScale[1]);
   const dashScale = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${SCALE_PHRASE})\\b`));
   if (dashScale) return scalePhraseValue(dashScale[1]);
-  const equalsScale = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${SCALE_PHRASE})\\b`));
+  const equalsScale = after.match(new RegExp(`^\\s*=\\s*(?:[x×*]\\s*)?(${SCALE_PHRASE})\\b`));
   if (equalsScale) return scalePhraseValue(equalsScale[1]);
   const commaScale = after.match(new RegExp(`^\\s*,\\s*(${SCALE_PHRASE})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaScale) return scalePhraseValue(commaScale[1]);
@@ -341,31 +395,51 @@ function detectTrailingQuantity(afterRaw) {
     const dm = after.match(re);
     if (dm) return quantityValue(dm[1] ?? dm[2]) * 12 + 6;
   }
+  // "A dozen and a quarter" written after the item is fifteen, in
+  // every delimiter form, and "one and a quarter dozen" after the
+  // item is the same fifteen — the quarter mirrors of the half
+  // forms above. Before this, the group patterns below read only
+  // the dozen part ("mugs: a dozen and a quarter" drafted twelve)
+  // or nothing at all (the parenthesised form drafted one).
+  const DAQ_COUNT = `(?:(\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN})[-\\s]+)?dozen[-\\s]+and[-\\s]+a[-\\s]+quarter`;
+  const AQD_COUNT = `(\\d{1,3}(?!\\d)|${QUANTITY_WORD_TOKEN})[-\\s]+and[-\\s]+a[-\\s]+quarter[-\\s]+dozen`;
+  const daqForms = [
+    new RegExp(`^\\s*:\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\b`),
+    new RegExp(`^\\s*\\(\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\s*\\)`),
+    new RegExp(`^\\s*\\[\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\s*\\]`),
+    new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\b`),
+    new RegExp(`^\\s*=\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\b`),
+    new RegExp(`^\\s*,\\s*(?:${DAQ_COUNT}|${AQD_COUNT})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`),
+  ];
+  for (const re of daqForms) {
+    const qm = after.match(re);
+    if (qm) return quantityValue(qm[1] ?? qm[2]) * 12 + 3;
+  }
   // Dozen and pair phrases come before the single-word patterns
   // below: those would read only the count word ("candles: two
   // dozen" drafted two) or just the article ("candles: a dozen"
   // drafted one).
   const colonGroup = after.match(new RegExp(`^\\s*:\\s*(${GROUP_PHRASE})\\b`));
   if (colonGroup) return groupPhraseValue(colonGroup[1]);
-  const parenGroup = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\s*\\)`));
+  const parenGroup = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×*]\\s*)?(${GROUP_PHRASE})\\s*\\)`));
   if (parenGroup) return groupPhraseValue(parenGroup[1]);
-  const bracketGroup = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\s*\\]`));
+  const bracketGroup = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×*]\\s*)?(${GROUP_PHRASE})\\s*\\]`));
   if (bracketGroup) return groupPhraseValue(bracketGroup[1]);
   const dashGroup = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(${GROUP_PHRASE})\\b`));
   if (dashGroup) return groupPhraseValue(dashGroup[1]);
-  const equalsGroup = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(${GROUP_PHRASE})\\b`));
+  const equalsGroup = after.match(new RegExp(`^\\s*=\\s*(?:[x×*]\\s*)?(${GROUP_PHRASE})\\b`));
   if (equalsGroup) return groupPhraseValue(equalsGroup[1]);
   const commaGroup = after.match(new RegExp(`^\\s*,\\s*(${GROUP_PHRASE})\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (commaGroup) return groupPhraseValue(commaGroup[1]);
   const colon = after.match(new RegExp(`^\\s*:\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (colon) return quantityValue(colon[1] ?? colon[2]);
-  const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\)`));
+  const paren = after.match(new RegExp(`^\\s*\\(\\s*(?:[x×*]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\)`));
   if (paren) return quantityValue(paren[1] ?? paren[2]);
-  const bracket = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\]`));
+  const bracket = after.match(new RegExp(`^\\s*\\[\\s*(?:[x×*]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\s*\\]`));
   if (bracket) return quantityValue(bracket[1] ?? bracket[2]);
   const dash = after.match(new RegExp(`^\\s*[-\\u2013\\u2014]\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (dash) return quantityValue(dash[1] ?? dash[2]);
-  const equals = after.match(new RegExp(`^\\s*=\\s*(?:[x×]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
+  const equals = after.match(new RegExp(`^\\s*=\\s*(?:[x×*]\\s*)?(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b`));
   if (equals) return quantityValue(equals[1] ?? equals[2]);
   const comma = after.match(new RegExp(`^\\s*,\\s*(?:(\\d{1,3})(?!\\d)|(${QUANTITY_WORD_TOKEN}))\\b(?:\\s+of\\s+(?:them|those|these)\\b|\\s+please\\b|\\s*[.!?;]|\\s*$)`));
   if (comma) return quantityValue(comma[1] ?? comma[2]);
@@ -423,7 +497,7 @@ const CONTAINER_WORDS = [
 const QTY_PHRASE = `(?:(?:${TENS_TOKEN})\\s+(?:${ONES_TOKEN})|${QUANTITY_WORD_TOKEN}|\\d{1,3}(?!\\d))`;
 // The same phrase, or a dozen form of it ("a dozen", "two dozen",
 // "half a dozen", a bare "dozen").
-const COUNT_PHRASE = `(?:half\\s+(?:a\\s+)?dozen|(?:${QTY_PHRASE}\\s+)?dozen|${QTY_PHRASE})`;
+const COUNT_PHRASE = `(?:half\\s+(?:a\\s+)?dozen|(?:${QTY_PHRASE}\\s+)?quarters?\\s+(?:of\\s+(?:a\\s+)?)?dozen|(?:${QTY_PHRASE}\\s+)?dozen|${QTY_PHRASE})`;
 
 function countPhraseValue(phrase) {
   const p = String(phrase || "").trim();
@@ -462,6 +536,32 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // Only the quantity look-back copy is normalised — keyword matching
   // on the original text is untouched.
   let before = stripFillerWords(String(beforeRaw || "").replace(/-/g, " "));
+  // A fraction OF a dozen is a whole number of units — "1/2 dozen
+  // mugs" is six mugs and "1/4 dozen" is three, exactly the amount
+  // the word forms already draft ("half a dozen", "quarter dozen").
+  // Before this, the fraction was neutralised below and every
+  // numeric fraction of a dozen silently drafted a single unit
+  // ($12 instead of $72 for a half dozen). Only fractions that
+  // come out whole count (1/4, 1/3, 1/2, 2/3, 3/4 of twelve); a
+  // fraction that does not ("1/5 dozen") falls through to the
+  // neutralisation below and drafts one, exactly like a bare
+  // fraction with no dozen ("1/2 mugs"). A container around the
+  // fraction multiplies first: "2 boxes of 1/2 dozen candles" is
+  // two boxes of six — twelve candles.
+  const fracContainer = before.match(
+    new RegExp(
+      `(?:^|\\s)(${COUNT_PHRASE})\\s+(?:(?:${[...FILLER_WORDS].join("|")})\\s+)?(?:boxes|box|packs?|sets?|cases?|bundles?|cartons?|pieces?|pcs?|units?|bags?|jars?|crates?|sacks?|pouch(?:es)?|tins?)\\s+of\\s+(\\d+)\\s*\\/\\s*(\\d+)\\s+dozen\\s*$`,
+    ),
+  );
+  if (fracContainer) {
+    const inner = (parseInt(fracContainer[2], 10) * 12) / parseInt(fracContainer[3], 10);
+    if (Number.isInteger(inner)) return countPhraseValue(fracContainer[1]) * inner;
+  }
+  const fracDozen = before.match(/(?:^|\s)(\d+)\s*\/\s*(\d+)\s+dozen\s*(?:of\s*)?$/);
+  if (fracDozen) {
+    const value = (parseInt(fracDozen[1], 10) * 12) / parseInt(fracDozen[2], 10);
+    if (Number.isInteger(value)) return value;
+  }
   // A decimal number never supplies a count. The catalog sells whole
   // units, so a fractional amount ("1.5 mugs") cannot be ordered —
   // but before this, the digit patterns below read only the digits
@@ -484,6 +584,9 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // this look-back copy makes the integer rules see no count in it,
   // and the dozen/scale guard below refuses a fraction directly in
   // front of one of those words outright, exactly like a decimal.
+  // The one exception sits above this neutralisation: a fraction
+  // OF a dozen that comes out whole ("1/2 dozen" = 6) is a whole
+  // number of units and is read before the fraction is erased.
   before = before.replace(/\d+\s*\/\s*\d+/g, " fraction ");
   // A thousands separator is part of the number: "1,000 candles"
   // is a thousand candles (clamped to 99 by the caller). Before
@@ -547,8 +650,27 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   if (dozenAndHalf) return quantityValue(dozenAndHalf[1]) * 12 + 6;
   const andHalfDozen = before.match(new RegExp(`(?:^|\\s)(${QUANTITY_TOKEN})\\s+and\\s+a\\s+half\\s+dozen\\s*(?:of\\s*)?$`));
   if (andHalfDozen) return quantityValue(andHalfDozen[1]) * 12 + 6;
+  // "A dozen and a quarter" is fifteen — a dozen plus a quarter
+  // dozen (three) — and "one and a quarter dozen" is the same
+  // fifteen said the other way round, the quarter mirrors of the
+  // half forms above. Before these were read, the first form
+  // silently drafted one (no rule matched a phrase ending in
+  // "quarter") and the second drafted three (the quarter-dozen
+  // rule below read its tail on its own). Both run before that
+  // rule for the same reason the half forms run before theirs.
+  const dozenAndQuarter = before.match(new RegExp(`(?:^|\\s)(?:(${QUANTITY_TOKEN})\\s+)?dozen\\s+and\\s+a\\s+quarter\\s*(?:of\\s*)?$`));
+  if (dozenAndQuarter) return quantityValue(dozenAndQuarter[1]) * 12 + 3;
+  const andQuarterDozen = before.match(new RegExp(`(?:^|\\s)(${QUANTITY_TOKEN})\\s+and\\s+a\\s+quarter\\s+dozen\\s*(?:of\\s*)?$`));
+  if (andQuarterDozen) return quantityValue(andQuarterDozen[1]) * 12 + 3;
   const halfDozen = before.match(/half\s+(?:a\s+)?dozen\s*(?:of\s*)?$/);
   if (halfDozen) return 6;
+  // "A quarter dozen" is three and "three quarters of a dozen" is
+  // nine. Before this, the generic dozen rule below read every
+  // quarter form as a full dozen (12) — four times the spoken
+  // amount for a single quarter — and the trailing forms drafted
+  // one. The count before "quarter(s)" defaults to one quarter.
+  const quarterDozen = before.match(new RegExp(`(?:^|\\s)(?:(${QUANTITY_TOKEN})\\s+)?quarters?\\s+(?:of\\s+(?:a\\s+)?)?dozen\\s*(?:of\\s*)?$`));
+  if (quarterDozen) return quantityValue(quarterDozen[1]) * 3;
   // "A couple of dozen mugs" is two dozen — 24, not 12. The generic
   // dozen rule below cannot see the "couple" across the "of", so this
   // combined form is checked first.
@@ -594,9 +716,9 @@ function detectQuantity(beforeRaw, allowGroup = true) {
   // Unicode form was not recognised here (the trailing lookup
   // already accepted it), so every such sentence silently
   // drafted a quantity of 1.
-  const compound = before.match(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\s](one|two|three|four|five|six|seven|eight|nine)\s*(?:[x×]\s*)?$/);
+  const compound = before.match(/(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[-\s](one|two|three|four|five|six|seven|eight|nine)\s*(?:[x×*]\s*)?$/);
   if (compound) return TENS_WORDS[compound[1]] + ONES_WORDS[compound[2]];
-  const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:[x×]\\s*)?$`));
+  const m = before.match(new RegExp(`(${QUANTITY_TOKEN})\\s*(?:[x×*]\\s*)?$`));
   if (m) return quantityValue(m[1]);
   return 1;
 }
@@ -611,7 +733,7 @@ function detectQuantity(beforeRaw, allowGroup = true) {
 // cue aimed at an earlier item ("no mug and a candle") never leaks
 // onto the next one.
 const NEGATION_FILLER = new Set([
-  ...Object.keys(NUMBER_WORDS), "any", "the", "more", "half", "add", "include", "want",
+  ...Object.keys(NUMBER_WORDS), "any", "the", "more", "half", "quarter", "quarters", "add", "include", "want",
   "need", "buy", "get", "please", "pair", "pairs", "couple", "couples",
   "of", "dozen", "hundred", "thousand", "and", ...FILLER_WORDS, ...CONTAINER_WORDS,
 ]);
@@ -637,7 +759,7 @@ function isNegatedMention(input, hitStart) {
   // mugs") is quantity phrasing, not a new item: before it was
   // allowed here, the fraction broke the negation and the item the
   // buyer excluded was drafted after all.
-  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+[x×]$/.test(w) || /^\d+\/\d+$/.test(w) || /^\d{1,3}(?:,\d{3})*$/.test(w) || /^\d+,\d+$/.test(w));
+  return between.length <= 5 && between.every((w) => NEGATION_FILLER.has(w) || /^\d+$/.test(w) || /^\d+[x×*]$/.test(w) || /^\d+\/\d+$/.test(w) || /^\d{1,3}(?:,\d{3})*$/.test(w) || /^\d+,\d+$/.test(w));
 }
 
 function money(n) {

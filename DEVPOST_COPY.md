@@ -59,11 +59,14 @@ when a catalog adjective sits between it and the item ("2 wireless
 headphones" drafts two, not one), or when a general descriptive
 adjective does ("2 black headphones" drafts two, "a dozen red
 candles" drafts twelve, and "no red mugs" drafts no mugs), or when a pattern, style, or size adjective does ("2 striped mugs" drafts two, "two floral candles" drafts two, "a dozen teal mugs" drafts twelve, and "no striped mugs" drafts no mugs), or written after the item in
-shopping-list style ("mugs x3", "mugs 3x", and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one), and a scale phrase counts in every trailing form ("mugs: a hundred" drafts ninety-nine — one hundred, clamped — not one, and "candles: two hundred" drafts ninety-nine, not two). A decimal amount never supplies a count
+shopping-list style ("mugs x3", "mugs 3x", "mugs * 3", "3 * mugs", and "mugs = 3" draft three), or after it behind a comma that closes the mention ("mugs, three of them" drafts three, while the count in "mugs, 3 candles" still belongs to the candles), and a compound number word counts in every trailing form ("mugs: twenty-one" drafts twenty-one, not twenty, and "mugs (forty two)" drafts forty-two, not one), and a scale phrase counts in every trailing form ("mugs: a hundred" drafts ninety-nine — one hundred, clamped — not one, and "candles: two hundred" drafts ninety-nine, not two). A decimal amount never supplies a count
 either — "1.5 mugs" drafts one, not five, and "1.5 dozen mugs" drafts
-one, not sixty. A slash fraction never supplies a count either —
-"1/2 mugs" drafts one, not two (the denominator), "1/2 dozen mugs"
-drafts one, not twenty-four, and "mugs: 3/4" drafts one, not three.
+one, not sixty. A slash fraction never supplies a count on its
+own either — "1/2 mugs" drafts one, not two (the denominator),
+and "mugs: 3/4" drafts one, not three — but a fraction of a dozen
+is a whole number of units: "1/2 dozen mugs" drafts six, "1/4
+dozen mugs" drafts three, and "a dozen and a quarter mugs"
+drafts fifteen.
 A thousands separator is part of the number, not a list comma —
 "1,000 candles" drafts ninety-nine (one thousand, clamped), not
 nothing, "mugs: 1,000" drafts ninety-nine, not one, an invalid
@@ -105,7 +108,7 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
 - A dependency-free Node.js server (`src/server.js`) and a single-page UI
   (`public/`) keep the whole demo runnable with `npm start` and no build
   step.
-- Tests (`npm test`, 145 passing) cover the AI step (provider
+- Tests (`npm test`, 157 passing) cover the AI step (provider
   configuration from environment variables, the OpenAI, Anthropic, and
   Gemini response shapes, catalog repricing of model output, and
   fallback to the rules parser on failure, garbage replies, and
@@ -129,7 +132,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   ninety-nine — summing
   repeated mentions of the same item in one sentence, dozen
   quantities — "a dozen mugs" drafts twelve, "half-dozen" drafts
-  six and "two-dozen" drafts twenty-four, and a dozen and a half
+  six and "two-dozen" drafts twenty-four, "quarter dozen" drafts
+  three (not twelve) and "three quarters of a dozen" drafts nine
+  in front of and after the item, and a dozen and a half
   ("a dozen and a half mugs", "one and a half dozen mugs") drafts
   eighteen in front of and after the item — quantities stated
   before a catalog adjective and before a general descriptive
@@ -138,7 +143,9 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   mugs" drafts two, "no striped mugs" drafts none), trailing counts after the item
   ("mugs x3", list-style "mugs: 3" and "mugs (3)", the number-times
   forms "mugs 3x" and "mugs: 3x", the Unicode multiplication sign
-  before the item ("3× mugs" drafts three, not one), and the bare, dash,
+  before the item ("3× mugs" drafts three, not one), the asterisk in
+  both positions ("mugs * 3" and "3 * mugs" draft three, not one, and
+  "no 3* mugs" drafts none), and the bare, dash,
   bracket, and equals shorthands "mugs 3", "mugs - 3", "mugs [3]", and
   "mugs = 3", while a longer number after any of them invents
   nothing, and a postposed comma count that closes the mention —
@@ -153,14 +160,17 @@ Demo transaction (sandbox): order ID [SANDBOX_ORDER_ID], capture ID
   twelve and "headphones by the pair" drafts two, while an unsized
   unit ("mugs by the case") invents nothing — and pack-size notes
   after the item — "mugs (pack of 6)" drafts six and "candles:
-  box of 12" drafts twelve — and scale counts
+  box of 12" drafts twelve — and counted packs after the item —
+  "mugs (2-pack)", "mugs [2-pack]", and "mugs, 2-pack" draft two,
+  and "mugs (six-pack)" drafts six — and scale counts
   in every trailing form — "mugs: a hundred" and "candles: two
   hundred" draft ninety-nine (the scaled quantity, clamped), and
   "mugs, a hundred of them" drafts ninety-nine), decimal amounts that
   never supply a count ("1.5 mugs" drafts one, not five, and
   "1.5 dozen mugs" drafts one, not sixty), slash fractions that never
-  supply a count either ("1/2 mugs" drafts one, not two, and
-  "1/2 dozen mugs" drafts one, not twenty-four), thousands separators
+  supply a count on their own ("1/2 mugs" drafts one, not two), while
+  a fraction of a dozen drafts the whole units it names ("1/2 dozen
+  mugs" drafts six) and "a dozen and a quarter mugs" drafts fifteen, thousands separators
   that are part of the number, not a list comma ("1,000 candles"
   drafts ninety-nine — one thousand, clamped — not nothing, and
   "mugs: 1,000" drafts ninety-nine, not one, while an invalid

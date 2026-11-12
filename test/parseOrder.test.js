@@ -818,6 +818,53 @@ test("hyphenated counted dozen drafts the counted amount", () => {
   assert.equal(standard.total, 45.5);
 });
 
+test("quarter-dozen forms draft three (nine for three quarters), not twelve", () => {
+  for (const text of ["quarter dozen mugs", "a quarter dozen mugs", "quarter of a dozen mugs", "a quarter of a dozen mugs", "quarter-dozen mugs", "a quarter-dozen mugs"]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].quantity, 3, text);
+    assert.equal(d.total, 36, text);
+  }
+  for (const text of ["three quarter dozen mugs", "three quarters of a dozen mugs", "three-quarters of a dozen mugs"]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items[0].quantity, 9, text);
+    assert.equal(d.total, 108, text);
+  }
+  const inner = parseOrderText("2 boxes of a quarter dozen candles");
+  assert.equal(inner.items[0].quantity, 6);
+  assert.equal(inner.total, 81);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("trailing quarter-dozen counts draft three, not one", () => {
+  const colon = parseOrderText("mugs: quarter dozen");
+  assert.equal(colon.items[0].quantity, 3);
+  assert.equal(colon.total, 36);
+  const counted = parseOrderText("candles: a quarter dozen");
+  assert.equal(counted.items[0].quantity, 3);
+  assert.equal(counted.total, 40.5);
+  const paren = parseOrderText("mugs (quarter dozen)");
+  assert.equal(paren.items[0].quantity, 3);
+  const comma = parseOrderText("mugs, a quarter dozen of them");
+  assert.equal(comma.items[0].quantity, 3);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("negation covers quarter-dozen phrasing, standard example unchanged", () => {
+  for (const text of [
+    "no quarter dozen mugs, just a candle",
+    "no quarter-dozen mugs, just a candle",
+    "no three quarters of a dozen mugs, just a candle",
+  ]) {
+    const d = parseOrderText(text);
+    assert.equal(d.items.length, 1, text);
+    assert.equal(d.items[0].sku, "candle", text);
+    assert.equal(d.total, 13.5, text);
+  }
+});
+
 test("negation covers half and hyphenated quantity phrasing", () => {
   for (const text of [
     "no half a dozen mugs, just a candle",
@@ -1168,12 +1215,10 @@ test("a slash fraction in front of the item invents no count", () => {
   assert.equal(spaced.total, 13.5);
 });
 
-test("a slash fraction in front of dozen or scale words drafts one, not the denominator times the group", () => {
-  const halfDozen = parseOrderText("1/2 dozen mugs");
-  assert.equal(halfDozen.items[0].quantity, 1);
-  assert.equal(halfDozen.total, 12);
-  const threeQuarterDozen = parseOrderText("3/4 dozen mugs");
-  assert.equal(threeQuarterDozen.items[0].quantity, 1);
+test("a slash fraction in front of scale words drafts one, not the denominator times the group", () => {
+  // A fraction of a dozen is whole units and is read as such (see
+  // the fraction-of-a-dozen tests at the end of this file); a
+  // fraction of a scale word is not, so it still drafts one.
   const halfHundred = parseOrderText("1/2 hundred candles");
   assert.equal(halfHundred.items[0].quantity, 1);
   const real = parseOrderText("a dozen mugs");
@@ -1183,8 +1228,6 @@ test("a slash fraction in front of dozen or scale words drafts one, not the deno
 test("trailing slash fractions invent nothing, fraction negation holds, standard example unchanged", () => {
   const colon = parseOrderText("mugs: 3/4");
   assert.equal(colon.items[0].quantity, 1);
-  const colonDozen = parseOrderText("mugs: 1/2 dozen");
-  assert.equal(colonDozen.items[0].quantity, 1);
   const negated = parseOrderText("no 1/2 dozen mugs, just a candle");
   assert.equal(negated.items.length, 1);
   assert.equal(negated.items[0].sku, "candle");
@@ -1377,12 +1420,143 @@ test("a trailing pack size binds to its own item only", () => {
   assert.equal(both.total, 99);
 });
 
+test("a trailing counted pack supplies the quantity in paren, bracket, and comma forms", () => {
+  const paren = parseOrderText("mugs (2-pack)");
+  assert.equal(paren.items[0].quantity, 2);
+  assert.equal(paren.total, 24);
+  const bracket = parseOrderText("mugs [2-pack]");
+  assert.equal(bracket.items[0].quantity, 2);
+  const comma = parseOrderText("mugs, 2-pack");
+  assert.equal(comma.items[0].quantity, 2);
+  const word = parseOrderText("mugs (six-pack)");
+  assert.equal(word.items[0].quantity, 6);
+  assert.equal(word.total, 72);
+});
+
+test("a trailing counted pack binds to its own item only", () => {
+  const mixed = parseOrderText("mugs (2-pack) and candles");
+  assert.equal(mixed.items[0].quantity, 2);
+  assert.equal(mixed.items[1].quantity, 1);
+  const candles = parseOrderText("candles (12-pack)");
+  assert.equal(candles.items[0].quantity, 12);
+  assert.equal(candles.total, 162);
+});
+
+test("a negated counted pack drafts none, and the standard example is unchanged", () => {
+  const negated = parseOrderText("no mugs (2-pack), just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
 test("pack-size note without a container invents nothing, negation and standard example unchanged", () => {
   const negated = parseOrderText("no mugs (pack of 6), just a candle");
   assert.equal(negated.items.length, 1);
   assert.equal(negated.items[0].sku, "candle");
   const front = parseOrderText("pack of 6 mugs");
   assert.equal(front.items[0].quantity, 6);
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("an asterisk count after the item drafts that many, in every x position", () => {
+  const spaced = parseOrderText("mugs * 3");
+  assert.equal(spaced.items[0].quantity, 3);
+  assert.equal(spaced.total, 36);
+  const tight = parseOrderText("mugs*3");
+  assert.equal(tight.items[0].quantity, 3);
+  const paren = parseOrderText("mugs (*3)");
+  assert.equal(paren.items[0].quantity, 3);
+  const bracket = parseOrderText("mugs [*3]");
+  assert.equal(bracket.items[0].quantity, 3);
+  const equals = parseOrderText("mugs = *3");
+  assert.equal(equals.items[0].quantity, 3);
+  const list = parseOrderText("mugs * 3 and candles * 2");
+  assert.equal(list.items.find((i) => i.sku === "mug").quantity, 3);
+  assert.equal(list.items.find((i) => i.sku === "candle").quantity, 2);
+  assert.equal(list.total, 63);
+});
+
+test("an asterisk count before the item drafts that many, words and compounds included", () => {
+  const spaced = parseOrderText("3 * mugs");
+  assert.equal(spaced.items[0].quantity, 3);
+  assert.equal(spaced.total, 36);
+  const tight = parseOrderText("3*mugs");
+  assert.equal(tight.items[0].quantity, 3);
+  const word = parseOrderText("two * mugs");
+  assert.equal(word.items[0].quantity, 2);
+  const compound = parseOrderText("twenty-one * mugs");
+  assert.equal(compound.items[0].quantity, 21);
+  assert.equal(compound.total, 252);
+});
+
+test("an asterisk invents nothing without a digit count, and negation holds", () => {
+  const bare = parseOrderText("mugs *");
+  assert.equal(bare.items[0].quantity, 1);
+  const wordAfter = parseOrderText("mugs * two");
+  assert.equal(wordAfter.items[0].quantity, 1);
+  const longer = parseOrderText("mugs * 2026");
+  assert.equal(longer.items[0].quantity, 1);
+  const decimal = parseOrderText("mugs * 2.5");
+  assert.equal(decimal.items[0].quantity, 1);
+  const negated = parseOrderText("no 3* mugs, just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("a numeric fraction of a dozen drafts the whole units it names", () => {
+  const half = parseOrderText("1/2 dozen mugs");
+  assert.equal(half.items[0].quantity, 6);
+  assert.equal(half.total, 72);
+  const article = parseOrderText("a 1/2 dozen mugs");
+  assert.equal(article.items[0].quantity, 6);
+  const quarter = parseOrderText("1/4 dozen mugs");
+  assert.equal(quarter.items[0].quantity, 3);
+  const threeQuarters = parseOrderText("3/4 dozen mugs");
+  assert.equal(threeQuarters.items[0].quantity, 9);
+  const twoThirds = parseOrderText("2/3 dozen mugs");
+  assert.equal(twoThirds.items[0].quantity, 8);
+  const container = parseOrderText("2 boxes of 1/2 dozen candles");
+  assert.equal(container.items[0].quantity, 12);
+  assert.equal(container.total, 162);
+});
+
+test("a fraction that is not whole units of a dozen invents nothing, and negation holds", () => {
+  const fifth = parseOrderText("1/5 dozen mugs");
+  assert.equal(fifth.items[0].quantity, 1);
+  const bareFraction = parseOrderText("1/2 mugs");
+  assert.equal(bareFraction.items[0].quantity, 1);
+  const negated = parseOrderText("no 1/2 dozen mugs, just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
+  const standard = parseOrderText("2 coffee beans and a notebook");
+  assert.equal(standard.total, 45.5);
+});
+
+test("a dozen and a quarter drafts fifteen, in front of and after the item", () => {
+  const front = parseOrderText("a dozen and a quarter mugs");
+  assert.equal(front.items[0].quantity, 15);
+  assert.equal(front.total, 180);
+  const counted = parseOrderText("two dozen and a quarter mugs");
+  assert.equal(counted.items[0].quantity, 27);
+  const flipped = parseOrderText("one and a quarter dozen mugs");
+  assert.equal(flipped.items[0].quantity, 15);
+  const colon = parseOrderText("mugs: a dozen and a quarter");
+  assert.equal(colon.items[0].quantity, 15);
+  const paren = parseOrderText("mugs (a dozen and a quarter)");
+  assert.equal(paren.items[0].quantity, 15);
+  const comma = parseOrderText("mugs, a dozen and a quarter of them");
+  assert.equal(comma.items[0].quantity, 15);
+  const trailingFraction = parseOrderText("mugs: 1/2 dozen");
+  assert.equal(trailingFraction.items[0].quantity, 6);
+  const parenFraction = parseOrderText("mugs (3/4 dozen)");
+  assert.equal(parenFraction.items[0].quantity, 9);
+  const negated = parseOrderText("no dozen and a quarter mugs, just a candle");
+  assert.equal(negated.items.length, 1);
+  assert.equal(negated.items[0].sku, "candle");
   const standard = parseOrderText("2 coffee beans and a notebook");
   assert.equal(standard.total, 45.5);
 });

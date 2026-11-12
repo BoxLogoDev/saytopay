@@ -53,7 +53,7 @@ The full timed filming script lives in `DEMO_SCRIPT.md`, the step-by-step record
 npm test
 ```
 
-The test suite (145 tests) covers the AI language step (provider
+The test suite (157 tests) covers the AI language step (provider
 configuration from environment variables, reply validation for the
 OpenAI, Anthropic, and Gemini response shapes, catalog repricing of
 model output, and fallback to the rules parser on failure, garbage
@@ -81,10 +81,20 @@ mugs" drafts the scaled quantity, not just the five — summing repeated mention
 mugs" is twelve mugs, "half a dozen" is six, and the hyphenated
 forms count the same — "half-dozen" is six and "two-dozen" is
 twenty-four, while "no half a dozen mugs" drafts no mugs — and a
+quarter of a dozen is three, not twelve: "quarter dozen mugs",
+"a quarter of a dozen mugs", and the trailing forms ("mugs: quarter
+dozen", "mugs, a quarter dozen of them") draft three, "three
+quarters of a dozen" drafts nine, and "no quarter dozen mugs"
+drafts no mugs — and a
 dozen and a half: "a dozen and a half mugs" and "one and a half
 dozen mugs" are both eighteen, "two dozen and a half mugs" is
 thirty, and the same phrases after the item ("mugs: a dozen and a
-half", "mugs, a dozen and a half of them") count the same — quantities stated
+half", "mugs, a dozen and a half of them") count the same — and a
+dozen and a quarter: "a dozen and a quarter mugs" and "one and a
+quarter dozen mugs" are both fifteen, "two dozen and a quarter
+mugs" is twenty-seven, and the same phrases after the item
+("mugs: a dozen and a quarter", "mugs (a dozen and a quarter)")
+count the same — quantities stated
 before a catalog adjective: "2 wireless headphones" is two headphones,
 "a dozen ceramic mugs" is twelve mugs — and before a general
 descriptive adjective (a color, a material, a quality): "2 black
@@ -96,7 +106,7 @@ drafts no mugs — and before a pattern, style, or size adjective:
 "no striped mugs" drafts no mugs — trailing counts written after
 the item: "mugs x3" is three mugs and "coffee beans x2" is two, applied
 to that item only — and the same multiplier written after its number:
-"mugs 3x" and "mugs: 3x" are three mugs, and the Unicode multiplication sign before the item counts the same way ("3× mugs", "3 × mugs" and "twenty-one× mugs" draft three and twenty-one), while a longer number or a
+"mugs 3x" and "mugs: 3x" are three mugs, and the Unicode multiplication sign before the item counts the same way ("3× mugs", "3 × mugs" and "twenty-one× mugs" draft three and twenty-one), and the asterisk counts the same way in both positions ("mugs * 3" and "3 * mugs" draft three, "two * mugs" drafts two, and "no 3* mugs" drafts no mugs), while a longer number or a
 glued unit ("mugs 2026x", "mugs 3xg") invents nothing — and list-style counts after the item: "mugs: 3",
 "candles: two", and "mugs (3)" draft those quantities for that item,
 while a colon with no count after it invents nothing — and the other
@@ -117,7 +127,9 @@ the item: "mugs by the dozen" drafts twelve and "headphones by the
 pair" drafts two, while an unsized unit ("mugs by the case") invents
 nothing — and pack-size notes after the item: "mugs (pack of 6)"
 drafts six, "candles: box of 12" drafts twelve, and "mugs (pack of
-six)" drafts six, while the note binds to its own item only — and scale counts in every trailing
+six)" drafts six, while the note binds to its own item only — and
+counted packs after the item: "mugs (2-pack)", "mugs [2-pack]", and
+"mugs, 2-pack" draft two, and "mugs (six-pack)" drafts six — and scale counts in every trailing
 form: "mugs: a hundred" drafts ninety-nine (one hundred, clamped to
 the per-item maximum), "candles: two hundred" drafts ninety-nine,
 "mugs, a hundred of them" drafts ninety-nine, and "candles: a hundred
@@ -125,9 +137,15 @@ and five" drafts ninety-nine — decimal amounts, which never supply a
 count (the catalog sells whole units): "1.5 mugs" drafts one mug, not
 five, "1.25 mugs" drafts one, not twenty-five, and "1.5 dozen mugs"
 drafts one, not sixty — slash fractions, which never supply a count
-either: "1/2 mugs" drafts one mug, not two (the denominator), "1/2
-dozen mugs" drafts one, not twenty-four, "mugs: 3/4" drafts one, not
-three, and "no 1/2 dozen mugs" drafts no mugs — thousands separators, which are part of the number, not a list comma: "1,000 candles" drafts ninety-nine (one thousand, clamped), not nothing (the tail "000" used to be read as an explicit zero and the item dropped), "mugs: 1,000" drafts ninety-nine, not one, a comma grouping that is not valid ("12,34 mugs") invents no count, and "no 1,000 mugs" drafts no mugs — word-boundary matching:
+on their own: "1/2 mugs" drafts one mug, not two (the denominator),
+"mugs: 3/4" drafts one, not three — except a fraction of a dozen,
+which is a whole number of units: "1/2 dozen mugs" drafts six,
+"1/4 dozen mugs" drafts three, "3/4 dozen mugs" drafts nine, the
+trailing forms ("mugs: 1/2 dozen", "mugs (3/4 dozen)") count the
+same, a container around the fraction multiplies ("2 boxes of 1/2
+dozen candles" drafts twelve), a fraction that is not whole units
+of a dozen ("1/5 dozen mugs") still drafts one, and "no 1/2 dozen
+mugs" drafts no mugs — thousands separators, which are part of the number, not a list comma: "1,000 candles" drafts ninety-nine (one thousand, clamped), not nothing (the tail "000" used to be read as an explicit zero and the item dropped), "mugs: 1,000" drafts ninety-nine, not one, a comma grouping that is not valid ("12,34 mugs") invents no count, and "no 1,000 mugs" drafts no mugs — word-boundary matching:
 "booking" does not draft a book and "cupcake" does not draft a mug,
 while plurals like "mugs" and "notebooks" still match — including the irregular plural "mice" for the mouse ("two mice" drafts two mice, $68) and the singular "earbud" for the headphones ("an earbud" drafts the headphones, $59, where the plural-only keyword used to draft nothing) — and the standalone synonyms buyers use on their own: "headset" drafts the headphones ($59), "tee" drafts the t-shirt ($24), and "notepad" drafts the notebook ($9.50), where each of those words used to draft nothing at all — and the hyphenated spelling "tee-shirt" drafts one shirt ($24), where the same word used to match "tee" and "shirt" as two separate mentions and draft two ($48), and "two tee-shirts" drafts two, not three — and explicit
 negation: "no notebook, just 2 coffee beans" drafts only the coffee,
