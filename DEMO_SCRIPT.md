@@ -59,6 +59,32 @@ dashboard. Say it, review it, pay for it — that is SayToPay."
 - [ ] Total runtime checked after edit: must stay under 3:00
 - [ ] Upload as YouTube or Vimeo link for the Devpost form
 
+## Filming status (2026-11-12, 89th cycle)
+
+- Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
+  `ai.configured: false` — no LLM key in this environment, so the draft
+  on camera is produced by the rules fallback and the draft note says
+  so), parse ($45.50 for the filmed example, `source: rules`), catalog
+  (12 items), and UI serving were re-verified live in this cycle, and
+  `npm test` passes 145/145. Real sandbox order creation for the filmed
+  sentence was re-verified (order 36A31438RC223501P, CREATED, $45.50,
+  approval URL issued; status lookup returned CREATED with no capture
+  — items coffee-beans ×2 + notebook ×1 — and an unapproved capture was
+  refused by the real API with 422 `ORDER_NOT_APPROVED`, mapped by
+  the app to `upstream_error`) — creation only, not capture. The
+  submission runbook's Gate 0 and placeholder check were refreshed to
+  this cycle, and its Step 1 was corrected: the remote HEAD is the
+  88th-cycle commit 6998656bd92222459f1381d8383a980c28ef57e6, not the
+  stale 86th-cycle commit it previously cited. The submission images
+  (cover + flow, 1600x900, PNG·RGB) are still in place in the
+  submission-assets folder. The owner is traveling in Ishigaki; the
+  approval step still needs the owner's PayPal Developer sign-in. The
+  final submission phase starts at 2026-11-12 18:00 KST; that phase
+  must follow the submission runbook and must not record a submission
+  as complete while Gate 0 is uncleared.
+- Scenes 4–5 stay unfilmed until a QA cycle completes a real sandbox
+  create → approve → capture run and records its order and capture IDs.
+
 ## Filming status (2026-11-12, 88th cycle)
 
 - Scenes 1–3 remain filmable: health (`credentialsConfigured: true`,
